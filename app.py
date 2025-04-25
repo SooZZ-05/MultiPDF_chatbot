@@ -40,7 +40,7 @@ def get_vectorstore(text_chunks):
 
 def get_conversation_chain(vectorstore):
     llm = ChatOpenAI(
-        model_name="mistralai/mistral-7b-instruct:free"
+        model_name="mistralai/mistral-7b-instruct:free",
         temperature=0.3,
     )
 
