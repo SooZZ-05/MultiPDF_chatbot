@@ -4,4 +4,3 @@ PyPDF2
 langchain
 openai
 faiss-cpu
-htmlTemplates @ file://./htmlTemplates
