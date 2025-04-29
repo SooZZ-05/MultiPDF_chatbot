@@ -64,8 +64,8 @@ def display_chat_history():
         # Creating a dynamic container for chat history
         chat_history_container = st.empty()  
 
-        # Displaying all messages in reverse order
-        for message in reversed(st.session_state.chat_history):
+        # Displaying all messages in order
+        for message in st.session_state.chat_history:
             if len(message["content"]) > 0:
                 # Display user message
                 with st.chat_message("user"):
