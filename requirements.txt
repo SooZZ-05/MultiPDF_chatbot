@@ -2,6 +2,7 @@ streamlit
 python-dotenv
 PyPDF2
 langchain
+langchain-community
 openai
 faiss-cpu
 transformers
