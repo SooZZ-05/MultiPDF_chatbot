@@ -10,7 +10,6 @@ from langchain.memory import ConversationBufferMemory
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
-    # Fetch the OpenAI API key from Streamlit secrets
     os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 def get_pdf_text(pdf_docs):
@@ -34,21 +33,19 @@ def get_vectorstore(text_chunks):
     return FAISS.from_texts(texts=text_chunks, embedding=embeddings)
 
 def get_conversation_chain(vectorstore):
-    # Instantiate the OpenAI Chat model with the API key
     llm = ChatOpenAI(
-        model_name="gpt-3.5-turbo",  # Or use another OpenAI model here
+        model_name="gpt-3.5-turbo",
         temperature=0.3,
-        openai_api_key=os.getenv("OPENAI_API_KEY")  # Using the API key from the environment variable
+        openai_api_key=os.getenv("OPENAI_API_KEY")
     )
-
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
     return ConversationalRetrievalChain.from_llm(
-        llm=llm, retriever=vectorstore.as_retriever(), memory=memory
+        llm=llm, retriever=vectorstore.as_retriever(search_kwargs={"k": 20}), memory=memory  # Increase k to 20 for more chunks
     )
 
 def handle_userinput(user_question):
     if st.session_state.conversation:
-        # Send the user's question and get a response
+        # Send the user's question and get a response (from all relevant chunks)
         response = st.session_state.conversation({'question': user_question})
         
         # Append the new question and response to the existing conversation history
@@ -59,10 +56,7 @@ def handle_userinput(user_question):
         display_chat_history()
 
 def display_chat_history():
-    # Create a dynamic container to update chat history
     chat_history_container = st.container()
-
-    # Displaying all messages in order
     for message in st.session_state.chat_history:
         if len(message["content"]) > 0:
             if message["role"] == "user":
@@ -73,7 +67,6 @@ def display_chat_history():
                     st.markdown(message["content"])
 
 def main():
-    # Set the OpenAI API key from Streamlit secrets
     set_openai_api_key()
 
     st.set_page_config(page_title="Chat with Multiple PDFs", page_icon=":books:", layout="wide")
@@ -83,9 +76,9 @@ def main():
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
     if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []  # Initialize chat history as a list to accumulate the conversation
+        st.session_state.chat_history = []
     if "displayed_messages" not in st.session_state:
-        st.session_state.displayed_messages = []  # Initialize displayed messages
+        st.session_state.displayed_messages = []
 
     # Sidebar for PDF Upload
     with st.sidebar:
@@ -100,7 +93,6 @@ def main():
                 vectorstore = get_vectorstore(text_chunks)
                 st.session_state.conversation = get_conversation_chain(vectorstore)
 
-            # Display success message after processing is complete
             st.success("PDFs successfully processed!")
 
     # Disable user input until the PDFs are uploaded and processed
@@ -108,6 +100,7 @@ def main():
         user_question = st.chat_input("💬 Ask a question about your documents:")
         if user_question:
             handle_userinput(user_question)
+        display_chat_history()
     else:
         st.warning("Please upload and process the PDFs before asking questions.")
 
