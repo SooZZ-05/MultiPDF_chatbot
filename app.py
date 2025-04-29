@@ -50,6 +50,8 @@ def handle_userinput(user_question):
     if st.session_state.conversation:
         # Send the user's question and get a response
         response = st.session_state.conversation({'question': user_question})
+        
+        # Append new conversation to the existing history
         st.session_state.chat_history = response['chat_history']
         
         # Create a scrollable chat container
@@ -83,7 +85,7 @@ def main():
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
     if "chat_history" not in st.session_state:
-        st.session_state.chat_history = None
+        st.session_state.chat_history = []  # Initialize chat history as a list to accumulate the conversation
     if "displayed_messages" not in st.session_state:
         st.session_state.displayed_messages = []  # Initialize displayed messages
 
