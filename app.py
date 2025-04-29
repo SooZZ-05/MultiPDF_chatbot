@@ -56,11 +56,9 @@ def handle_userinput(user_question):
         # Send the user's question and get a response
         response = st.session_state.conversation({'question': user_question})
 
-        # Check if the question is already in history to avoid duplicates
-        if len(st.session_state.chat_history) == 0 or st.session_state.chat_history[-1]["content"] != user_question:
-            # Append the new question and response to the existing conversation history
-            st.session_state.chat_history.append({"role": "user", "content": user_question})
-            st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
+        # Ensure the history is updated correctly
+        st.session_state.chat_history.append({"role": "user", "content": user_question})
+        st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
 
         # Display the updated chat history in a scrollable container
         display_chat_history()
@@ -112,42 +110,52 @@ def save_chat_to_pdf(chat_history):
 
     pdf.set_font("Arial", '', 12)
 
-    for entry in chat_history:
-        # Safe access to 'user' and 'assistant' content with fallback
-        user_msg = entry.get("user", "No user message available").strip()
-        assistant_msg = entry.get("assistant", "No assistant message available").strip()
+    # Only process if chat history is available
+    if chat_history:
+        for entry in chat_history:
+            # Ensure there are valid user and assistant messages
+            user_msg = entry.get("user", "").strip()
+            assistant_msg = entry.get("assistant", "").strip()
 
-        label_user = f"You:\n{user_msg}"
-        label_assistant = f"Assistant:\n{assistant_msg}"
+            # If either message is missing, skip the entry
+            if not user_msg or not assistant_msg:
+                continue
 
-        # Estimate heights
-        user_box_height = estimate_multicell_height(pdf, label_user, box_width, line_height)
-        assistant_box_height = estimate_multicell_height(pdf, label_assistant, box_width, line_height)
-        total_pair_height = user_box_height + assistant_box_height + box_spacing
+            label_user = f"You:\n{user_msg}"
+            label_assistant = f"Assistant:\n{assistant_msg}"
 
-        # If not enough space, start new page
-        if pdf.get_y() + total_pair_height > usable_height:
-            pdf.add_page()
+            # Estimate heights
+            user_box_height = estimate_multicell_height(pdf, label_user, box_width, line_height)
+            assistant_box_height = estimate_multicell_height(pdf, label_assistant, box_width, line_height)
+            total_pair_height = user_box_height + assistant_box_height + box_spacing
 
-        # Render You box
-        y_start = pdf.get_y()
-        pdf.rect(10, y_start, box_width, user_box_height)
-        pdf.set_xy(12, y_start + 2)
-        pdf.multi_cell(0, line_height, label_user)
-        pdf.ln(2)
+            # If not enough space, start new page
+            if pdf.get_y() + total_pair_height > usable_height:
+                pdf.add_page()
 
-        # Render Assistant box
-        y_start = pdf.get_y()
-        pdf.rect(10, y_start, box_width, assistant_box_height)
-        pdf.set_xy(12, y_start + 2)
-        pdf.set_text_color(0, 102, 204)
-        pdf.multi_cell(0, line_height, label_assistant)
-        pdf.set_text_color(0, 0, 0)
-        pdf.ln(4)
+            # Render You box
+            y_start = pdf.get_y()
+            pdf.rect(10, y_start, box_width, user_box_height)
+            pdf.set_xy(12, y_start + 2)
+            pdf.multi_cell(0, line_height, label_user)
+            pdf.ln(2)
 
-    # Output PDF
-    pdf_bytes = pdf.output(dest='S').encode('latin1')
-    return BytesIO(pdf_bytes)
+            # Render Assistant box
+            y_start = pdf.get_y()
+            pdf.rect(10, y_start, box_width, assistant_box_height)
+            pdf.set_xy(12, y_start + 2)
+            pdf.set_text_color(0, 102, 204)
+            pdf.multi_cell(0, line_height, label_assistant)
+            pdf.set_text_color(0, 0, 0)
+            pdf.ln(4)
+
+        # Output PDF
+        pdf_bytes = pdf.output(dest='S').encode('latin1')
+        return BytesIO(pdf_bytes)
+
+    else:
+        # If no chat history exists, return an empty file or a message
+        return None
 
 # Main Application Logic
 def main():
@@ -198,6 +206,8 @@ def main():
                 file_name="chat_history.pdf",
                 mime="application/pdf"
             )
+        else:
+            st.warning("No chat history to export.")
 
 if __name__ == "__main__":
     main()
