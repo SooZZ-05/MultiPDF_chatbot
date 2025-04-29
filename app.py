@@ -52,17 +52,25 @@ def handle_userinput(user_question):
         response = st.session_state.conversation({'question': user_question})
         st.session_state.chat_history = response['chat_history']
         
-        # Clear previous chat messages before rendering again
-        for message in reversed(st.session_state.chat_history):
-            if message not in st.session_state.displayed_messages:
+        # Create a scrollable chat container
+        with st.container():
+            chat_history_container = st.empty()  # Creating a dynamic container for chat history
+            
+            # Append the conversation history
+            for message in reversed(st.session_state.chat_history):
                 if len(message.content) > 0:
                     if len(st.session_state.displayed_messages) == 0 or st.session_state.displayed_messages[-1]['user'] != user_question:
+                        # Display user message
                         with st.chat_message("user"):
                             st.markdown(user_question)
+                        # Display assistant message
                         with st.chat_message("assistant"):
                             st.markdown(message.content)
 
                         st.session_state.displayed_messages.append({'user': user_question, 'assistant': message.content})
+
+            # Scroll the container to the latest messages
+            chat_history_container.write('')  # This will make the container scrollable when new messages are added.
 
 def main():
     # Set the OpenAI API key from Streamlit secrets
