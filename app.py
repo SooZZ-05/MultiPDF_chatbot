@@ -50,10 +50,12 @@ def handle_userinput(user_question):
     if st.session_state.conversation:
         # Send the user's question and get a response
         response = st.session_state.conversation({'question': user_question})
-        
-        # Append the new question and response to the existing conversation history
-        st.session_state.chat_history.append({"role": "user", "content": user_question})
-        st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
+
+        # Check if the question is already in history to avoid duplicates
+        if len(st.session_state.chat_history) == 0 or st.session_state.chat_history[-1]["content"] != user_question:
+            # Append the new question and response to the existing conversation history
+            st.session_state.chat_history.append({"role": "user", "content": user_question})
+            st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
 
         # Display the updated chat history in a scrollable container
         display_chat_history()
