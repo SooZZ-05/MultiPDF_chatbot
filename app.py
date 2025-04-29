@@ -32,7 +32,7 @@ def get_vectorstore(text_chunks):
     embeddings = OpenAIEmbeddings()
     return FAISS.from_texts(texts=text_chunks, embedding=embeddings)
 
-def get_conversation_chain(vectorstore):
+def get_conversation_chain(vectorstore, user_question):
     retrieve_all = any(keyword in user_question.lower() for keyword in ["all", "everything", "entire", "complete"])
     k_value = 20 if not retrieve_all else len(vectorstore)
     llm = ChatOpenAI(
