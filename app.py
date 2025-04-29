@@ -11,9 +11,8 @@ from langchain.chains import ConversationalRetrievalChain
 from htmlTemplates import css, bot_template, user_template
 
 # Load API Key from environment
-def set_openrouter_api_key():
-    os.environ["OPENAI_API_KEY"] = os.getenv("OPENROUTER_API_KEY")
-    os.environ["OPENAI_API_BASE"] = "https://openrouter.ai/api/v1"
+def set_openai_api_key():
+    os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 def get_pdf_text(pdf_docs):
     text = ""
@@ -63,7 +62,7 @@ def handle_userinput(user_question):
 
 def main():
     load_dotenv()
-    set_openrouter_api_key()
+    set_openai_api_key()
 
     st.set_page_config(page_title="Chat with multiple PDFs", page_icon=":books:")
     st.write(css, unsafe_allow_html=True)
