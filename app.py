@@ -92,6 +92,9 @@ def main():
                 vectorstore = get_vectorstore(text_chunks)
                 st.session_state.conversation = get_conversation_chain(vectorstore)
 
+            # Display success message after processing is complete
+            st.success("PDFs successfully processed!")
+
     # Disable user input until the PDFs are uploaded and processed
     if st.session_state.conversation:
         user_question = st.chat_input("💬 Ask a question about your documents:")
