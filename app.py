@@ -40,17 +40,13 @@ def get_conversation_chain(vectorstore):
     )
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
     return ConversationalRetrievalChain.from_llm(
-        llm=llm, retriever=vectorstore.as_retriever(search_kwargs={"k": 1000}), memory=memory
+        llm=llm, retriever=vectorstore.as_retriever(search_kwargs={"k": 20}), memory=memory  # Increase k to 20 for more chunks
     )
 
 def handle_userinput(user_question):
     if st.session_state.conversation:
         # Send the user's question and get a response (from all relevant chunks)
         response = st.session_state.conversation({'question': user_question})
-
-        if "laptop" in user_question.lower():  # If "laptop" is mentioned in the user's question
-            # Perform additional processing here to count instances of 'laptop' in all relevant chunks
-            count_laptops_in_chunks(response['answer'])
         
         # Append the new question and response to the existing conversation history
         st.session_state.chat_history.append({"role": "user", "content": user_question})
@@ -58,12 +54,6 @@ def handle_userinput(user_question):
 
         # Display the updated chat history in a scrollable container
         display_chat_history()
-
-def count_laptops_in_chunks(answer):
-    # Assuming `answer` is the concatenated text from the relevant chunks
-    # This will simply count how many times "laptop" appears
-    laptop_count = answer.lower().count("laptop")
-    st.session_state.chat_history.append({"role": "assistant", "content": f"There are {laptop_count} laptops mentioned in the documents."})
 
 def display_chat_history():
     chat_history_container = st.container()
