@@ -11,7 +11,8 @@ from langchain.memory import ConversationBufferMemory
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
-    os.environ["OPENAI_API_KEY"] = st.secrets["OPENROUTER_API_KEY"]
+    # Fetch the OpenAI API key from Streamlit secrets
+    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 def get_pdf_text(pdf_docs):
     text = ""
@@ -34,11 +35,11 @@ def get_vectorstore(text_chunks):
     return FAISS.from_texts(texts=text_chunks, embedding=embeddings)
 
 def get_conversation_chain(vectorstore):
+    # Instantiate the OpenAI Chat model with the API key
     llm = ChatOpenAI(
-        model_name="mistralai/mistral-7b-instruct",
+        model_name="gpt-3.5-turbo",  # Or use another OpenAI model here
         temperature=0.3,
-        base_url="https://openrouter.ai/api/v1",
-        openai_api_key=os.getenv("OPENAI_API_KEY")
+        openai_api_key=os.getenv("OPENAI_API_KEY")  # Using the API key from the environment variable
     )
 
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
@@ -57,6 +58,7 @@ def handle_userinput(user_question):
             st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
 
 def main():
+    # Set the OpenAI API key from Streamlit secrets
     set_openai_api_key()
 
     st.set_page_config(page_title="Chat with multiple PDFs", page_icon=":books:")
