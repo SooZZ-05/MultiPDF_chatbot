@@ -54,29 +54,34 @@ def handle_userinput(user_question):
         # Append the new question and response to the existing conversation history
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
-        
-        # Create a scrollable chat container
-        with st.container():
-            chat_history_container = st.empty()  # Creating a dynamic container for chat history
-            
-            # Append the conversation history to the chat container
-            for message in reversed(st.session_state.chat_history):
-                if len(message["content"]) > 0:
-                    # Display user message
-                    with st.chat_message("user"):
-                        st.markdown(message["content"] if message["role"] == "user" else "")
-                    # Display assistant message
-                    with st.chat_message("assistant"):
-                        st.markdown(message["content"] if message["role"] == "assistant" else "")
 
-            # Scroll the container to the latest messages
-            chat_history_container.write('')  # This will make the container scrollable when new messages are added.
+        # Display the updated chat history in a scrollable container
+        display_chat_history()
+
+def display_chat_history():
+    # Create a scrollable chat container
+    with st.container():
+        # Creating a dynamic container for chat history
+        chat_history_container = st.empty()  
+
+        # Displaying all messages in reverse order
+        for message in reversed(st.session_state.chat_history):
+            if len(message["content"]) > 0:
+                # Display user message
+                with st.chat_message("user"):
+                    st.markdown(message["content"] if message["role"] == "user" else "")
+                # Display assistant message
+                with st.chat_message("assistant"):
+                    st.markdown(message["content"] if message["role"] == "assistant" else "")
+
+        # Scroll the container to the latest messages
+        chat_history_container.write('')  # This will make the container scrollable when new messages are added.
 
 def main():
     # Set the OpenAI API key from Streamlit secrets
     set_openai_api_key()
 
-    st.set_page_config(page_title="Chat with multiple PDFs", page_icon=":books:", layout="wide")
+    st.set_page_config(page_title="Chat with Multiple PDFs", page_icon=":books:", layout="wide")
     st.title("💻 Chat with Multiple PDFs")
 
     # Initialize session states for chat and history if they don't exist
