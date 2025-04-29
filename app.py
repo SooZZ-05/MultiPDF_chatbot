@@ -7,6 +7,7 @@ from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
+import re  # Importing regex for pattern matching
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
@@ -25,7 +26,7 @@ def get_pdf_text(pdf_docs):
 
 def get_text_chunks(text):
     text_splitter = CharacterTextSplitter(
-        separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
+        separator="\n", chunk_size=2000, chunk_overlap=500, length_function=len
     )
     return text_splitter.split_text(text)
 
@@ -74,6 +75,11 @@ def display_chat_history():
                 with st.chat_message("assistant"):
                     st.markdown(message["content"])
 
+def extract_laptops_from_text(text):
+    laptop_pattern = r"(?:Laptop|Model|Device)\s*[:\-]?\s*([A-Za-z0-9\s\-]+)"
+    matches = re.findall(laptop_pattern, text)
+    return matches
+
 def main():
     # Set the OpenAI API key from Streamlit secrets
     set_openai_api_key()
@@ -95,6 +101,7 @@ def main():
         pdf_docs = st.file_uploader("📄 Upload your PDFs here", accept_multiple_files=True)
         process_button = st.button("Process")
 
+        # Process PDFs and create vector store
         if pdf_docs and process_button:
             with st.spinner("Processing..."):
                 raw_text = get_pdf_text(pdf_docs)
@@ -102,14 +109,30 @@ def main():
                 vectorstore = get_vectorstore(text_chunks)
                 st.session_state.conversation = get_conversation_chain(vectorstore)
 
-            # Display success message after processing is complete
-            st.success("PDFs successfully processed!")
+                # Extract all laptops mentioned in the document
+                laptops = extract_laptops_from_text(raw_text)
+                st.session_state.laptops = list(set(laptops))  # Remove duplicates
 
-    # Disable user input until the PDFs are uploaded and processed
+            # Display success message after processing is complete
+            st.success("PDFs successfully processed and laptops extracted!")
+
+    # Allow users to list laptops if they ask for it
     if st.session_state.conversation:
         user_question = st.chat_input("💬 Ask a question about your documents:")
         if user_question:
-            handle_userinput(user_question)
+            # If the user asks to list all laptops
+            if "list all laptops" in user_question.lower() or "laptops in the document" in user_question.lower():
+                laptop_list = "\n".join(st.session_state.laptops)
+                st.session_state.chat_history.append({
+                    "role": "assistant",
+                    "content": f"Here are all the laptops mentioned in the document:\n{laptop_list}"
+                })
+            else:
+                handle_userinput(user_question)
+
+            # Display the updated chat history in a scrollable container
+            display_chat_history()
+
     else:
         st.warning("Please upload and process the PDFs before asking questions.")
 
