@@ -32,7 +32,7 @@ def get_vectorstore(text_chunks):
     embeddings = OpenAIEmbeddings()
     return FAISS.from_texts(texts=text_chunks, embedding=embeddings)
 
-def get_conversation_chain(vectorstore):
+def get_conversation_chain(vectorstore, k=5):
     llm = ChatOpenAI(
         model_name="gpt-3.5-turbo",
         temperature=0.3,
@@ -40,20 +40,37 @@ def get_conversation_chain(vectorstore):
     )
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
     return ConversationalRetrievalChain.from_llm(
-        llm=llm, retriever=vectorstore.as_retriever(search_kwargs={"k": 20}), memory=memory  # Increase k to 20 for more chunks
+        llm=llm, retriever=vectorstore.as_retriever(search_kwargs={"k": k}), memory=memory
     )
+
+def aggregate_answers(chunks):
+    combined_answer = ""
+    for chunk in chunks:
+        combined_answer += chunk['text'] + "\n"
+    return combined_answer.strip()
 
 def handle_userinput(user_question):
     if st.session_state.conversation:
-        # Send the user's question and get a response (from all relevant chunks)
-        response = st.session_state.conversation({'question': user_question})
+        if "list" in user_question.lower() or "all" in user_question.lower():
+            st.session_state.conversation = get_conversation_chain(vectorstore, k=20)
+        else:
+            st.session_state.conversation = get_conversation_chain(vectorstore, k=5)
         
+        response = st.session_state.conversation({'question': user_question})
+        aggregated_answer = aggregate_answers(response['chunks'])
         # Append the new question and response to the existing conversation history
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
 
         # Display the updated chat history in a scrollable container
         display_chat_history()
+
+def retrieve_relevant_chunks(vectorstore, question, k=20):
+    retriever = vectorstore.as_retriever(search_kwargs={"k": k})
+    docs = retriever.get_relevant_documents(question)
+    # Filter chunks based on relevance to the question
+    filtered_docs = [doc for doc in docs if is_relevant(doc, question)]
+    return filtered_docs
 
 def display_chat_history():
     chat_history_container = st.container()
