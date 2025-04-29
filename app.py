@@ -7,11 +7,6 @@ from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
-from fpdf import FPDF
-from datetime import datetime
-import pytz
-import re
-from io import BytesIO
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
@@ -56,9 +51,11 @@ def handle_userinput(user_question):
         # Send the user's question and get a response
         response = st.session_state.conversation({'question': user_question})
 
-        # Ensure the history is updated correctly
-        st.session_state.chat_history.append({"role": "user", "content": user_question})
-        st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
+        # Check if the question is already in history to avoid duplicates
+        if len(st.session_state.chat_history) == 0 or st.session_state.chat_history[-1]["content"] != user_question:
+            # Append the new question and response to the existing conversation history
+            st.session_state.chat_history.append({"role": "user", "content": user_question})
+            st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
 
         # Display the updated chat history in a scrollable container
         display_chat_history()
@@ -77,87 +74,6 @@ def display_chat_history():
                 with st.chat_message("assistant"):
                     st.markdown(message["content"])
 
-# ===== Chat Saving to PDF =====
-def estimate_multicell_height(pdf, text, width, line_height):
-    lines = pdf.multi_cell(width, line_height, text, split_only=True)
-    return len(lines) * line_height + 4  # +4 for padding
-
-def save_chat_to_pdf(chat_history):
-    def strip_emojis(text):
-        return re.sub(r'[^\x00-\x7F]+', '', text)
-
-    def remove_newlines(text):
-        return re.sub(r'\s*\n\s*', ' ', text.strip())
-
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=False)
-    page_height = 297  # A4 height in mm
-    margin_top = 10
-    margin_bottom = 10
-    usable_height = page_height - margin_top - margin_bottom
-    line_height = 8
-    box_spacing = 6
-    box_width = 190
-
-    # Header
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, "Chat History", ln=True, align="C")
-    pdf.set_font("Arial", '', 10)
-    malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%B %d, %Y %H:%M")
-    pdf.cell(0, 10, f"Exported on {malaysia_time} (MYT)", ln=True, align="C")
-    pdf.ln(5)
-
-    pdf.set_font("Arial", '', 12)
-
-    # Only process if chat history is available
-    if chat_history:
-        for entry in chat_history:
-            # Ensure there are valid user and assistant messages
-            user_msg = entry.get("user", "").strip()
-            assistant_msg = entry.get("assistant", "").strip()
-
-            # If either message is missing, skip the entry
-            if not user_msg or not assistant_msg:
-                continue
-
-            label_user = f"You:\n{user_msg}"
-            label_assistant = f"Assistant:\n{assistant_msg}"
-
-            # Estimate heights
-            user_box_height = estimate_multicell_height(pdf, label_user, box_width, line_height)
-            assistant_box_height = estimate_multicell_height(pdf, label_assistant, box_width, line_height)
-            total_pair_height = user_box_height + assistant_box_height + box_spacing
-
-            # If not enough space, start new page
-            if pdf.get_y() + total_pair_height > usable_height:
-                pdf.add_page()
-
-            # Render You box
-            y_start = pdf.get_y()
-            pdf.rect(10, y_start, box_width, user_box_height)
-            pdf.set_xy(12, y_start + 2)
-            pdf.multi_cell(0, line_height, label_user)
-            pdf.ln(2)
-
-            # Render Assistant box
-            y_start = pdf.get_y()
-            pdf.rect(10, y_start, box_width, assistant_box_height)
-            pdf.set_xy(12, y_start + 2)
-            pdf.set_text_color(0, 102, 204)
-            pdf.multi_cell(0, line_height, label_assistant)
-            pdf.set_text_color(0, 0, 0)
-            pdf.ln(4)
-
-        # Output PDF
-        pdf_bytes = pdf.output(dest='S').encode('latin1')
-        return BytesIO(pdf_bytes)
-
-    else:
-        # If no chat history exists, return an empty file or a message
-        return None
-
-# Main Application Logic
 def main():
     # Set the OpenAI API key from Streamlit secrets
     set_openai_api_key()
@@ -196,18 +112,6 @@ def main():
             handle_userinput(user_question)
     else:
         st.warning("Please upload and process the PDFs before asking questions.")
-
-    # Add Chat History to PDF
-    with st.sidebar:
-        if st.session_state.chat_history:
-            st.download_button(
-                label="📥 Download Chat History as PDF",
-                data=save_chat_to_pdf(st.session_state.chat_history),
-                file_name="chat_history.pdf",
-                mime="application/pdf"
-            )
-        else:
-            st.warning("No chat history to export.")
 
 if __name__ == "__main__":
     main()
