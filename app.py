@@ -59,23 +59,18 @@ def handle_userinput(user_question):
         display_chat_history()
 
 def display_chat_history():
-    # Create a scrollable chat container
-    with st.container():
-        # Creating a dynamic container for chat history
-        chat_history_container = st.empty()  
+    # Create a dynamic container to update chat history
+    chat_history_container = st.container()
 
-        # Displaying all messages in order
-        for message in st.session_state.chat_history:
-            if len(message["content"]) > 0:
-                # Display user message
+    # Displaying all messages in order
+    for message in st.session_state.chat_history:
+        if len(message["content"]) > 0:
+            if message["role"] == "user":
                 with st.chat_message("user"):
-                    st.markdown(message["content"] if message["role"] == "user" else "")
-                # Display assistant message
+                    st.markdown(message["content"])
+            elif message["role"] == "assistant":
                 with st.chat_message("assistant"):
-                    st.markdown(message["content"] if message["role"] == "assistant" else "")
-
-        # Scroll the container to the latest messages
-        chat_history_container.write('')  # This will make the container scrollable when new messages are added.
+                    st.markdown(message["content"])
 
 def main():
     # Set the OpenAI API key from Streamlit secrets
