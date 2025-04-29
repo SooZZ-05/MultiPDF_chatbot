@@ -1,6 +1,5 @@
 import streamlit as st
 import os
-from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
@@ -10,9 +9,9 @@ from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 
-# Load API Key from environment
+# Set API Key from Streamlit Secrets
 def set_openai_api_key():
-    os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+    os.environ["OPENAI_API_KEY"] = st.secrets["OPENROUTER_API_KEY"]
 
 def get_pdf_text(pdf_docs):
     text = ""
@@ -24,30 +23,28 @@ def get_pdf_text(pdf_docs):
                 text += content
     return text
 
-
 def get_text_chunks(text):
     text_splitter = CharacterTextSplitter(
         separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
     )
     return text_splitter.split_text(text)
 
-
 def get_vectorstore(text_chunks):
     embeddings = OpenAIEmbeddings()
     return FAISS.from_texts(texts=text_chunks, embedding=embeddings)
 
-
 def get_conversation_chain(vectorstore):
     llm = ChatOpenAI(
-        model_name="mistralai/mistral-7b-instruct:free",
+        model_name="mistralai/mistral-7b-instruct",
         temperature=0.3,
+        base_url="https://openrouter.ai/api/v1",
+        openai_api_key=os.getenv("OPENAI_API_KEY")
     )
 
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
     return ConversationalRetrievalChain.from_llm(
         llm=llm, retriever=vectorstore.as_retriever(), memory=memory
     )
-
 
 def handle_userinput(user_question):
     response = st.session_state.conversation({'question': user_question})
@@ -59,9 +56,7 @@ def handle_userinput(user_question):
         else:
             st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
 
-
 def main():
-    load_dotenv()
     set_openai_api_key()
 
     st.set_page_config(page_title="Chat with multiple PDFs", page_icon=":books:")
@@ -86,7 +81,6 @@ def main():
                 text_chunks = get_text_chunks(raw_text)
                 vectorstore = get_vectorstore(text_chunks)
                 st.session_state.conversation = get_conversation_chain(vectorstore)
-
 
 if __name__ == "__main__":
     main()
