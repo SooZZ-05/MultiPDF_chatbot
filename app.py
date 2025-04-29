@@ -32,7 +32,7 @@ def get_vectorstore(text_chunks):
     embeddings = OpenAIEmbeddings()
     return FAISS.from_texts(texts=text_chunks, embedding=embeddings)
 
-def get_conversation_chain(vectorstore, k=5):
+def get_conversation_chain(vectorstore):
     llm = ChatOpenAI(
         model_name="gpt-3.5-turbo",
         temperature=0.3,
@@ -40,29 +40,19 @@ def get_conversation_chain(vectorstore, k=5):
     )
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
     return ConversationalRetrievalChain.from_llm(
-        llm=llm, retriever=vectorstore.as_retriever(search_kwargs={"k": k}), memory=memory
+        llm=llm, retriever=vectorstore.as_retriever(search_kwargs={"k": 20}), memory=memory  # Increase k to 20 for more chunks
     )
 
-def aggregate_answers(chunks):
-    return "\n".join(answers)
-
 def handle_userinput(user_question):
-    # Ensure conversation and vectorstore are initialized
-    if st.session_state.conversation and "vectorstore" in st.session_state:
-
-        if "list" in user_question.lower() or "all" in user_question.lower():
-            st.session_state.conversation = get_conversation_chain(vectorstore, k=20)  # Retrieve more chunks if needed
-        else:
-            st.session_state.conversation = get_conversation_chain(vectorstore, k=5)  # Default chunk retrieval
-
+    if st.session_state.conversation:
+        # Send the user's question and get a response (from all relevant chunks)
         response = st.session_state.conversation({'question': user_question})
-        aggregated_answer = aggregate_answers(response['chunks'])  # Aggregate the chunks before sending back
-
+        
         # Append the new question and response to the existing conversation history
         st.session_state.chat_history.append({"role": "user", "content": user_question})
-        st.session_state.chat_history.append({"role": "assistant", "content": aggregated_answer})
+        st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
 
-        # Display the updated chat history
+        # Display the updated chat history in a scrollable container
         display_chat_history()
 
 def display_chat_history():
@@ -89,8 +79,6 @@ def main():
         st.session_state.chat_history = []
     if "displayed_messages" not in st.session_state:
         st.session_state.displayed_messages = []
-    if "vectorstore" not in st.session_state:
-        st.session_state.vectorstore = None  # Make sure vectorstore is initialized in session state
 
     # Sidebar for PDF Upload
     with st.sidebar:
@@ -103,7 +91,6 @@ def main():
                 raw_text = get_pdf_text(pdf_docs)
                 text_chunks = get_text_chunks(raw_text)
                 vectorstore = get_vectorstore(text_chunks)
-                st.session_state.vectorstore = vectorstore  # Store vectorstore in session state
                 st.session_state.conversation = get_conversation_chain(vectorstore)
 
             st.success("PDFs successfully processed!")
