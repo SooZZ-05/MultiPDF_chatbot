@@ -49,17 +49,13 @@ def get_conversation_chain(vectorstore):
     )
 
 def handle_userinput(user_question):
-    if len(st.session_state.chat_history) == 0 or st.session_state.chat_history[-1]["content"] != user_question:
-        # Append the new question to the conversation history
+    if user_question and (len(st.session_state.chat_history) == 0 or st.session_state.chat_history[-1]["content"] != user_question):
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         
         if st.session_state.conversation:
-            # Send the user's question and get a response
             response = st.session_state.conversation({'question': user_question})
-            # Append the assistant's response to the conversation history
             st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
 
-    # Display the updated chat history in a scrollable container
     display_chat_history()
 
 def display_chat_history():
