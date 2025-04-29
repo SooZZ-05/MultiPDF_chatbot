@@ -43,8 +43,9 @@ def get_conversation_chain(vectorstore):
     )
 
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 10})
     return ConversationalRetrievalChain.from_llm(
-        llm=llm, retriever=vectorstore.as_retriever(), memory=memory
+        llm=llm, retriever=retriever, memory=memory
     )
 
 def handle_userinput(user_question):
