@@ -113,8 +113,9 @@ def save_chat_to_pdf(chat_history):
     pdf.set_font("Arial", '', 12)
 
     for entry in chat_history:
-        user_msg = strip_emojis(entry["user"]).strip()
-        assistant_msg = remove_newlines(strip_emojis(entry["assistant"]).strip())
+        # Safe access to 'user' and 'assistant' content with fallback
+        user_msg = entry.get("user", "No user message available").strip()
+        assistant_msg = entry.get("assistant", "No assistant message available").strip()
 
         label_user = f"You:\n{user_msg}"
         label_assistant = f"Assistant:\n{assistant_msg}"
