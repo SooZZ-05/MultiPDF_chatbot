@@ -7,7 +7,6 @@ from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
-import re  # Importing regex for pattern matching
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
@@ -26,7 +25,7 @@ def get_pdf_text(pdf_docs):
 
 def get_text_chunks(text):
     text_splitter = CharacterTextSplitter(
-        separator="\n", chunk_size=2000, chunk_overlap=500, length_function=len
+        separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
     )
     return text_splitter.split_text(text)
 
@@ -43,20 +42,21 @@ def get_conversation_chain(vectorstore):
     )
 
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 10})
     return ConversationalRetrievalChain.from_llm(
-        llm=llm, retriever=retriever, memory=memory
+        llm=llm, retriever=vectorstore.as_retriever(), memory=memory
     )
 
 def handle_userinput(user_question):
-    if user_question and (len(st.session_state.chat_history) == 0 or st.session_state.chat_history[-1]["content"] != user_question):
-        st.session_state.chat_history.append({"role": "user", "content": user_question})
+    if st.session_state.conversation:
+        # Send the user's question and get a response
+        response = st.session_state.conversation({'question': user_question})
         
-        if st.session_state.conversation:
-            response = st.session_state.conversation({'question': user_question})
-            st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
+        # Append the new question and response to the existing conversation history
+        st.session_state.chat_history.append({"role": "user", "content": user_question})
+        st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
 
-    display_chat_history()
+        # Display the updated chat history in a scrollable container
+        display_chat_history()
 
 def display_chat_history():
     # Create a dynamic container to update chat history
@@ -72,16 +72,6 @@ def display_chat_history():
                 with st.chat_message("assistant"):
                     st.markdown(message["content"])
 
-def extract_laptops_from_text(text):
-    """
-    Extracts laptop mentions from the text using regex pattern matching.
-    This pattern can be adjusted based on how laptop models are described.
-    """
-    # Define a regex pattern to match common laptop names (e.g., "Acer Aspire", "Dell XPS 15")
-    laptop_pattern = r"(?:Laptop|Model|Device)\s*[:\-]?\s*([A-Za-z0-9\s\-]+)"
-    matches = re.findall(laptop_pattern, text)
-    return matches
-
 def main():
     # Set the OpenAI API key from Streamlit secrets
     set_openai_api_key()
@@ -96,8 +86,6 @@ def main():
         st.session_state.chat_history = []  # Initialize chat history as a list to accumulate the conversation
     if "displayed_messages" not in st.session_state:
         st.session_state.displayed_messages = []  # Initialize displayed messages
-    if "laptops" not in st.session_state:
-        st.session_state.laptops = []  # Initialize laptops list to prevent the error
 
     # Sidebar for PDF Upload
     with st.sidebar:
@@ -105,7 +93,6 @@ def main():
         pdf_docs = st.file_uploader("📄 Upload your PDFs here", accept_multiple_files=True)
         process_button = st.button("Process")
 
-        # Process PDFs and create vector store
         if pdf_docs and process_button:
             with st.spinner("Processing..."):
                 raw_text = get_pdf_text(pdf_docs)
@@ -113,30 +100,14 @@ def main():
                 vectorstore = get_vectorstore(text_chunks)
                 st.session_state.conversation = get_conversation_chain(vectorstore)
 
-                # Extract all laptops mentioned in the document
-                laptops = extract_laptops_from_text(raw_text)
-                st.session_state.laptops = list(set(laptops))  # Remove duplicates
-
+            # Display success message after processing is complete
             st.success("PDFs successfully processed!")
 
-    # Allow users to list laptops if they ask for it
+    # Disable user input until the PDFs are uploaded and processed
     if st.session_state.conversation:
         user_question = st.chat_input("💬 Ask a question about your documents:")
-
-        if user_question and user_question != "":
-            # If the user asks to list all laptops
-            if "list all laptops" in user_question.lower() or "laptops in the document" in user_question.lower():
-                laptop_list = "\n".join(st.session_state.laptops)
-                st.session_state.chat_history.append({
-                    "role": "assistant",
-                    "content": f"Here are all the laptops mentioned in the document:\n{laptop_list}"
-                })
-            else:
-                handle_userinput(user_question)
-
-            # Display the updated chat history in a scrollable container
-            display_chat_history()
-
+        if user_question:
+            handle_userinput(user_question)
     else:
         st.warning("Please upload and process the PDFs before asking questions.")
 
