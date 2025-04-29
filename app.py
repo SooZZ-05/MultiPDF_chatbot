@@ -51,25 +51,23 @@ def handle_userinput(user_question):
         # Send the user's question and get a response
         response = st.session_state.conversation({'question': user_question})
         
-        # Append new conversation to the existing history
-        st.session_state.chat_history = response['chat_history']
+        # Append the new question and response to the existing conversation history
+        st.session_state.chat_history.append({"role": "user", "content": user_question})
+        st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
         
         # Create a scrollable chat container
         with st.container():
             chat_history_container = st.empty()  # Creating a dynamic container for chat history
             
-            # Append the conversation history
+            # Append the conversation history to the chat container
             for message in reversed(st.session_state.chat_history):
-                if len(message.content) > 0:
-                    if len(st.session_state.displayed_messages) == 0 or st.session_state.displayed_messages[-1]['user'] != user_question:
-                        # Display user message
-                        with st.chat_message("user"):
-                            st.markdown(user_question)
-                        # Display assistant message
-                        with st.chat_message("assistant"):
-                            st.markdown(message.content)
-
-                        st.session_state.displayed_messages.append({'user': user_question, 'assistant': message.content})
+                if len(message["content"]) > 0:
+                    # Display user message
+                    with st.chat_message("user"):
+                        st.markdown(message["content"] if message["role"] == "user" else "")
+                    # Display assistant message
+                    with st.chat_message("assistant"):
+                        st.markdown(message["content"] if message["role"] == "assistant" else "")
 
             # Scroll the container to the latest messages
             chat_history_container.write('')  # This will make the container scrollable when new messages are added.
