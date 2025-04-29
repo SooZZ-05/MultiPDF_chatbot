@@ -49,18 +49,18 @@ def get_conversation_chain(vectorstore):
     )
 
 def handle_userinput(user_question):
-    if st.session_state.conversation:
-        # Send the user's question and get a response
-        response = st.session_state.conversation({'question': user_question})
-
-        # Check if the question is already in history to avoid duplicates
-        if len(st.session_state.chat_history) == 0 or st.session_state.chat_history[-1]["content"] != user_question:
-            # Append the new question and response to the existing conversation history
-            st.session_state.chat_history.append({"role": "user", "content": user_question})
+    if len(st.session_state.chat_history) == 0 or st.session_state.chat_history[-1]["content"] != user_question:
+        # Append the new question to the conversation history
+        st.session_state.chat_history.append({"role": "user", "content": user_question})
+        
+        if st.session_state.conversation:
+            # Send the user's question and get a response
+            response = st.session_state.conversation({'question': user_question})
+            # Append the assistant's response to the conversation history
             st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
 
-        # Display the updated chat history in a scrollable container
-        display_chat_history()
+    # Display the updated chat history in a scrollable container
+    display_chat_history()
 
 def display_chat_history():
     # Create a dynamic container to update chat history
@@ -121,8 +121,7 @@ def main():
                 laptops = extract_laptops_from_text(raw_text)
                 st.session_state.laptops = list(set(laptops))  # Remove duplicates
 
-            # Display success message after processing is complete
-            st.success("PDFs successfully processed and laptops extracted!")
+            st.success("PDFs successfully processed!")
 
     # Allow users to list laptops if they ask for it
     if st.session_state.conversation:
