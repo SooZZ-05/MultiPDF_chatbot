@@ -3,7 +3,6 @@ import os
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
-from htmlTemplates import css, bot_template, user_template
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
@@ -53,42 +52,32 @@ def handle_userinput(user_question):
         st.session_state.chat_history = response['chat_history']
     
         # Create the chat container
-        st.write('<div class="chat-container">', unsafe_allow_html=True)
-        
         for i, message in enumerate(st.session_state.chat_history):
             if i % 2 == 0:
-                st.write(user_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+                with st.chat_message("user"):
+                    st.markdown(message.content)
             else:
-                st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
-        
-        st.write('</div>', unsafe_allow_html=True)
-    else:
-        st.write("Conversation chain not initialized yet. Please upload and process the PDFs.")
+                with st.chat_message("assistant"):
+                    st.markdown(message.content)
 
 def main():
     # Set the OpenAI API key from Streamlit secrets
     set_openai_api_key()
 
-    st.set_page_config(page_title="Chat with multiple PDFs", page_icon=":books:")
-    st.write(css, unsafe_allow_html=True)
-
-    if "conversation" not in st.session_state:
-        st.session_state.conversation = None
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = None
-
-    st.header("Chat with multiple PDFs :books:")
+    st.set_page_config(page_title="Chat with multiple PDFs", page_icon=":books:", layout="wide")
+    st.title("💻 Chat with Multiple PDFs")
 
     # Create user input container
-    user_question = st.text_input("Ask a question about your documents:", key="user_input")
+    user_question = st.chat_input("💬 Ask a question about your documents:")
+
     if user_question:
         handle_userinput(user_question)
 
     with st.sidebar:
-        st.subheader("Your documents")
-        pdf_docs = st.file_uploader("Upload your PDFs here and click on 'Process'", accept_multiple_files=True)
+        st.subheader("Your Documents")
+        pdf_docs = st.file_uploader("📄 Upload your PDFs here", accept_multiple_files=True)
         if st.button("Process"):
-            with st.spinner("Processing"):
+            with st.spinner("Processing..."):
                 raw_text = get_pdf_text(pdf_docs)
                 text_chunks = get_text_chunks(raw_text)
                 vectorstore = get_vectorstore(text_chunks)
