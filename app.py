@@ -48,17 +48,21 @@ def get_conversation_chain(vectorstore):
 
 def handle_userinput(user_question):
     if st.session_state.conversation:
+        # Send the user's question and get a response
         response = st.session_state.conversation({'question': user_question})
         st.session_state.chat_history = response['chat_history']
-    
-        # Create the chat container
-        for i, message in enumerate(st.session_state.chat_history):
-            if i % 2 == 0:
-                with st.chat_message("user"):
-                    st.markdown(message.content)
-            else:
-                with st.chat_message("assistant"):
-                    st.markdown(message.content)
+        
+        # Clear previous chat messages before rendering again
+        for message in reversed(st.session_state.chat_history):
+            if message not in st.session_state.displayed_messages:
+                if len(message.content) > 0:
+                    if len(st.session_state.displayed_messages) == 0 or st.session_state.displayed_messages[-1]['user'] != user_question:
+                        with st.chat_message("user"):
+                            st.markdown(user_question)
+                        with st.chat_message("assistant"):
+                            st.markdown(message.content)
+
+                        st.session_state.displayed_messages.append({'user': user_question, 'assistant': message.content})
 
 def main():
     # Set the OpenAI API key from Streamlit secrets
@@ -66,6 +70,14 @@ def main():
 
     st.set_page_config(page_title="Chat with multiple PDFs", page_icon=":books:", layout="wide")
     st.title("💻 Chat with Multiple PDFs")
+
+    # Initialize session states for chat and history if they don't exist
+    if "conversation" not in st.session_state:
+        st.session_state.conversation = None
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = None
+    if "displayed_messages" not in st.session_state:
+        st.session_state.displayed_messages = []  # Initialize displayed messages
 
     # Create user input container
     user_question = st.chat_input("💬 Ask a question about your documents:")
