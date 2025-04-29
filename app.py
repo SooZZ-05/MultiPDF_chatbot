@@ -79,21 +79,26 @@ def main():
     if "displayed_messages" not in st.session_state:
         st.session_state.displayed_messages = []  # Initialize displayed messages
 
-    # Create user input container
-    user_question = st.chat_input("💬 Ask a question about your documents:")
-
-    if user_question:
-        handle_userinput(user_question)
-
+    # Sidebar for PDF Upload
     with st.sidebar:
         st.subheader("Your Documents")
         pdf_docs = st.file_uploader("📄 Upload your PDFs here", accept_multiple_files=True)
-        if st.button("Process"):
+        process_button = st.button("Process")
+
+        if pdf_docs and process_button:
             with st.spinner("Processing..."):
                 raw_text = get_pdf_text(pdf_docs)
                 text_chunks = get_text_chunks(raw_text)
                 vectorstore = get_vectorstore(text_chunks)
                 st.session_state.conversation = get_conversation_chain(vectorstore)
+
+    # Disable user input until the PDFs are uploaded and processed
+    if st.session_state.conversation:
+        user_question = st.chat_input("💬 Ask a question about your documents:")
+        if user_question:
+            handle_userinput(user_question)
+    else:
+        st.warning("Please upload and process the PDFs before asking questions.")
 
 if __name__ == "__main__":
     main()
