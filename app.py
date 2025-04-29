@@ -50,27 +50,24 @@ def aggregate_answers(chunks):
     return combined_answer.strip()
 
 def handle_userinput(user_question):
-    if st.session_state.conversation:
+    # Ensure conversation and vectorstore are initialized
+    if st.session_state.conversation and "vectorstore" in st.session_state:
+        vectorstore = st.session_state.vectorstore  # Access vectorstore from session state
+
         if "list" in user_question.lower() or "all" in user_question.lower():
-            st.session_state.conversation = get_conversation_chain(vectorstore, k=20)
+            st.session_state.conversation = get_conversation_chain(vectorstore, k=20)  # Retrieve more chunks if needed
         else:
-            st.session_state.conversation = get_conversation_chain(vectorstore, k=5)
-        
+            st.session_state.conversation = get_conversation_chain(vectorstore, k=5)  # Default chunk retrieval
+
         response = st.session_state.conversation({'question': user_question})
-        aggregated_answer = aggregate_answers(response['chunks'])
+        aggregated_answer = aggregate_answers(response['chunks'])  # Aggregate the chunks before sending back
+
         # Append the new question and response to the existing conversation history
         st.session_state.chat_history.append({"role": "user", "content": user_question})
-        st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
+        st.session_state.chat_history.append({"role": "assistant", "content": aggregated_answer})
 
-        # Display the updated chat history in a scrollable container
+        # Display the updated chat history
         display_chat_history()
-
-def retrieve_relevant_chunks(vectorstore, question, k=20):
-    retriever = vectorstore.as_retriever(search_kwargs={"k": k})
-    docs = retriever.get_relevant_documents(question)
-    # Filter chunks based on relevance to the question
-    filtered_docs = [doc for doc in docs if is_relevant(doc, question)]
-    return filtered_docs
 
 def display_chat_history():
     chat_history_container = st.container()
@@ -96,6 +93,8 @@ def main():
         st.session_state.chat_history = []
     if "displayed_messages" not in st.session_state:
         st.session_state.displayed_messages = []
+    if "vectorstore" not in st.session_state:
+        st.session_state.vectorstore = None  # Make sure vectorstore is initialized in session state
 
     # Sidebar for PDF Upload
     with st.sidebar:
@@ -108,6 +107,7 @@ def main():
                 raw_text = get_pdf_text(pdf_docs)
                 text_chunks = get_text_chunks(raw_text)
                 vectorstore = get_vectorstore(text_chunks)
+                st.session_state.vectorstore = vectorstore  # Store vectorstore in session state
                 st.session_state.conversation = get_conversation_chain(vectorstore)
 
             st.success("PDFs successfully processed!")
