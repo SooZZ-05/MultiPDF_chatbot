@@ -76,6 +76,11 @@ def display_chat_history():
                     st.markdown(message["content"])
 
 def extract_laptops_from_text(text):
+    """
+    Extracts laptop mentions from the text using regex pattern matching.
+    This pattern can be adjusted based on how laptop models are described.
+    """
+    # Define a regex pattern to match common laptop names (e.g., "Acer Aspire", "Dell XPS 15")
     laptop_pattern = r"(?:Laptop|Model|Device)\s*[:\-]?\s*([A-Za-z0-9\s\-]+)"
     matches = re.findall(laptop_pattern, text)
     return matches
@@ -94,6 +99,8 @@ def main():
         st.session_state.chat_history = []  # Initialize chat history as a list to accumulate the conversation
     if "displayed_messages" not in st.session_state:
         st.session_state.displayed_messages = []  # Initialize displayed messages
+    if "laptops" not in st.session_state:
+        st.session_state.laptops = []  # Initialize laptops list to prevent the error
 
     # Sidebar for PDF Upload
     with st.sidebar:
