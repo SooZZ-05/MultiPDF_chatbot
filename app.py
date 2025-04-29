@@ -122,7 +122,8 @@ def main():
     # Allow users to list laptops if they ask for it
     if st.session_state.conversation:
         user_question = st.chat_input("💬 Ask a question about your documents:")
-        if user_question:
+
+        if user_question and user_question != "":
             # If the user asks to list all laptops
             if "list all laptops" in user_question.lower() or "laptops in the document" in user_question.lower():
                 laptop_list = "\n".join(st.session_state.laptops)
