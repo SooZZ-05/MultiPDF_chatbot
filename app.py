@@ -44,15 +44,11 @@ def get_conversation_chain(vectorstore, k=5):
     )
 
 def aggregate_answers(chunks):
-    combined_answer = ""
-    for chunk in chunks:
-        combined_answer += chunk['text'] + "\n"
-    return combined_answer.strip()
+    return "\n".join(answers)
 
 def handle_userinput(user_question):
     # Ensure conversation and vectorstore are initialized
     if st.session_state.conversation and "vectorstore" in st.session_state:
-        vectorstore = st.session_state.vectorstore  # Access vectorstore from session state
 
         if "list" in user_question.lower() or "all" in user_question.lower():
             st.session_state.conversation = get_conversation_chain(vectorstore, k=20)  # Retrieve more chunks if needed
