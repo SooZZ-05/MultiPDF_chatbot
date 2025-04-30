@@ -48,11 +48,15 @@ def handle_userinput(user_question):
     greeting_reply = handle_greeting(user_question)
     if greeting_reply:
         st.chat_message("assistant").markdown(greeting_reply)
+        st.session_state.chat_history.append({"role": "user", "content": user_question})
+        st.session_state.chat_history.append({"role": "assistant", "content": greeting_reply})
         return
 
     farewell_reply = handle_farewell(user_question)
     if farewell_reply:
         st.chat_message("assistant").markdown(farewell_reply)
+        st.session_state.chat_history.append({"role": "user", "content": user_question})
+        st.session_state.chat_history.append({"role": "assistant", "content": farewell_reply})
         return
     if st.session_state.conversation:
         # Send the user's question and get a response (from all relevant chunks)
