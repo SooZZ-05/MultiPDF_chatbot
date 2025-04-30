@@ -9,7 +9,7 @@ from langchain.embeddings.base import Embeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
-from utils import handle_greeting, handle_farewell
+from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
@@ -54,16 +54,32 @@ def cosine_similarity(vec1, vec2):
 def handle_userinput(user_question):
     greeting_reply = handle_greeting(user_question)
     if greeting_reply:
-        # st.chat_message("assistant").markdown(greeting_reply)
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": greeting_reply})
         return
 
     farewell_reply = handle_farewell(user_question)
     if farewell_reply:
-        # st.chat_message("assistant").markdown(farewell_reply)
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": farewell_reply})
+        return
+
+    if is_summary_question(user_question) and "doc_summaries" in st.session_state:
+        summaries = st.session_state.doc_summaries
+        target_label = extract_target_doc_label(user_question, summaries)
+    
+        if target_label:
+            matched = next((s for s in summaries if s["label"] == target_label), None)
+            if matched:
+                summary_response = f"### {matched['label']}\n{matched['summary']}"
+            else:
+                summary_response = "Sorry, I couldn't find that document."
+        else:
+            # Return all summaries if no specific document mentioned
+            summary_response = "\n\n".join([f"### {s['label']}\n{s['summary']}" for s in summaries])
+    
+        st.session_state.chat_history.append({"role": "user", "content": user_question})
+        st.session_state.chat_history.append({"role": "assistant", "content": summary_response})
         return
     if st.session_state.conversation:
         response = st.session_state.conversation({'question': user_question})
@@ -120,7 +136,12 @@ def main():
 
         if pdf_docs and process_button:
             with st.spinner("Processing..."):
-                raw_text = get_pdf_text(pdf_docs)
+                labeled_docs = get_labeled_documents(pdf_docs)
+                doc_summaries = summarize_documents(labeled_docs)
+                st.session_state.doc_summaries = doc_summaries
+
+                raw_text = "\n".join(doc["text"] for doc in labeled_docs)
+                # raw_text = get_pdf_text(pdf_docs)
                 text_chunks = get_text_chunks(raw_text)
                 vectorstore = get_vectorstore(text_chunks)
                 st.session_state.conversation = get_conversation_chain(vectorstore)
