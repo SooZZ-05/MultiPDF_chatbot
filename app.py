@@ -189,7 +189,7 @@ def main():
     set_openai_api_key()
 
     st.set_page_config(page_title="Chat with Multiple PDFs", page_icon=":books:", layout="wide")
-    st.title("💻 Chat with Multiple PDFs")
+    st.title("💻 ChatBot for Laptop recommendation")
 
     # Initialize session states for chat and history if they don't exist
     if "conversation" not in st.session_state:
