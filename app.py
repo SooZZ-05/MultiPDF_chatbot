@@ -67,17 +67,16 @@ def handle_userinput(user_question):
     if is_summary_question(user_question) and "doc_summaries" in st.session_state:
         summaries = st.session_state.doc_summaries
         target_label = extract_target_doc_label(user_question, summaries)
-    
+
         if target_label:
-            matched = next((s for s in summaries if s["label"] == target_label), None)
+            matched = next((s for s in summaries if s["label"].lower() == target_label.lower()), None)
             if matched:
                 summary_response = f"### {matched['label']}\n{matched['summary']}"
             else:
-                summary_response = "Sorry, I couldn't find that document."
+                summary_response = f"Sorry, I couldn't find a document matching '{target_label}'."
         else:
-            # Return all summaries if no specific document mentioned
             summary_response = "\n\n".join([f"### {s['label']}\n{s['summary']}" for s in summaries])
-    
+
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": summary_response})
         return
