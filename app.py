@@ -39,10 +39,11 @@ def get_conversation_chain(vectorstore):
         temperature=0.3,
         openai_api_key=os.getenv("OPENAI_API_KEY")
     )
-    memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+    memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, output_key="answer")
     return ConversationalRetrievalChain.from_llm(
         llm=llm, retriever=vectorstore.as_retriever(search_kwargs={"k": 20}), memory=memory,
-        return_source_documents=True
+        return_source_documents=True,
+        output_key="answer"
     )
 
 def handle_userinput(user_question):
