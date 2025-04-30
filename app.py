@@ -41,7 +41,8 @@ def get_conversation_chain(vectorstore):
     )
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
     return ConversationalRetrievalChain.from_llm(
-        llm=llm, retriever=vectorstore.as_retriever(search_kwargs={"k": 20}), memory=memory  # Increase k to 20 for more chunks
+        llm=llm, retriever=vectorstore.as_retriever(search_kwargs={"k": 20}), memory=memory,
+        return_source_documents=True
     )
 
 def handle_userinput(user_question):
@@ -61,9 +62,11 @@ def handle_userinput(user_question):
     if st.session_state.conversation:
         response = st.session_state.conversation({'question': user_question})
         answer = response.get('answer', '').strip()
+        source_docs = response.get('source_documents', [])
 
-        if not answer or "I'm not sure" in answer or "I don't know" in answer:
+        if not answer or "I'm not sure" in answer or "I don't know" in answer or not source_docs:
             answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
+        
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
