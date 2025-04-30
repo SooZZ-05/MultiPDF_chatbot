@@ -1,4 +1,5 @@
 import random
+from langchian.chat_model import ChatOpenAI
 
 # Greeting and farewell keyword libraries
 GREETING_KEYWORDS = {"hi", "hello", "hey", "how are you", "good morning", "good afternoon", "greetings"}
@@ -32,3 +33,31 @@ def handle_farewell(user_input: str):
     if any(keyword in lower_input for keyword in FAREWELL_KEYWORDS) and len(lower_input.split()) <= 4:
         return random.choice(FAREWELL_REPLIES)
     return None
+
+def get_labeled_documents(pdf_docs):
+    labeled_docs = []
+    for i, pdf in enumerate(pdf_docs):
+        pdf_reader = PdfReader(pdf)
+        text = ""
+        for page in pdf_reader.pages:
+            content = page.extract_text()
+            if content:
+                text += content
+        doc_name = pdf.name
+        label = f"Document {i+1}: {doc_name}"
+        labeled_docs.append({"label": label, "text": text})
+    return labeled_docs
+
+def summarize_documents(labeled_docs):
+    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.3)
+
+    summaries = []
+    for doc in labeled_docs:
+        prompt = f"Please summarize the following document:\n\n{doc['text'][:4000]}\n\nSummary:"
+        response = llm.predict(prompt)
+        summaries.append({"label": doc["label"], "summary": response.strip()})
+    return summaries
+
+def is_summary_question(question: str) -> bool:
+    summary_keywords = ["summary", "summarize", "overview", "main idea", "key points", "what is in", "content of"]
+    return any(keyword in question.lower() for keyword in summary_keywords)
