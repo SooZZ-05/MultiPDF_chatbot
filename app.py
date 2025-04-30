@@ -42,7 +42,8 @@ def get_conversation_chain(vectorstore):
     llm = ChatOpenAI(
         model_name="gpt-3.5-turbo",
         temperature=0.3,
-        openai_api_key=os.getenv("OPENAI_API_KEY")
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
+        system="You are only allowed to answer questions based on the provided documents. If the answer is not in the documents, reply that you don't know."
     )
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, output_key="answer")
     return ConversationalRetrievalChain.from_llm(
@@ -140,7 +141,7 @@ def handle_userinput(user_question):
             ]
 
             max_similarity = max(doc_similarities)
-            grounded = max_similarity >= 0.7
+            grounded = max_similarity >= 0.85
         
         if not grounded:
             answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
