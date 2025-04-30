@@ -66,9 +66,6 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
 
-        # Display the updated chat history in a scrollable container
-        display_chat_history()
-
 def display_chat_history():
     chat_history_container = st.container()
     for message in st.session_state.chat_history:
