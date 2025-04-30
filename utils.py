@@ -88,3 +88,7 @@ def extract_target_doc_label(question: str, summaries: list, cutoff: float = 0.6
             return item['label']
     
     return None
+
+def is_wordcount_question(question: str) -> bool:
+    keywords = ["word count", "how many words", "number of words", "words in", "wordcount"]
+    return any(keyword in question.lower() for keyword in keywords)
