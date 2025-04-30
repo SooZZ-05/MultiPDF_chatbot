@@ -9,7 +9,7 @@ from langchain.embeddings.base import Embeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
-from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question, extract_target_doc_label, get_labeled_documents, is_wordcount_question
+from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question, extract_target_doc_label, get_labeled_documents, is_wordcount_question, count_words_in_documents
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
@@ -81,24 +81,24 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append({"role": "assistant", "content": summary_response})
         return
 
-    if is_wordcount_question(user_question) and "doc_summaries" in st.session_state:
-        summaries = st.session_state.doc_summaries
-        target_label = extract_target_doc_label(user_question, summaries)
+    if is_wordcount_question(user_question) and "word_counts" in st.session_state:
+        word_counts = st.session_state.word_counts
+        target_label = extract_target_doc_label(user_question, word_counts)
     
         if target_label:
-            matched = next((s for s in summaries if s["label"].lower() == target_label.lower()), None)
+            matched = next((w for w in word_counts if w["label"].lower() == target_label.lower()), None)
             if matched:
-                word_count_response = f"The word count for **{matched['label']}** is **{matched['word_count']}** words."
+                word_count_response = f"**{matched['label']}** has **{matched['word_count']}** words."
             else:
                 word_count_response = f"Sorry, I couldn't find a document matching '{target_label}'."
         else:
-            all_counts = [f"**{s['label']}**: {s['word_count']} words" for s in summaries]
+            all_counts = [f"**{w['label']}**: {w['word_count']} words" for w in word_counts]
             word_count_response = "Here are the word counts for all documents:\n\n" + "\n".join(all_counts)
     
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": word_count_response})
         return
-
+        
     if st.session_state.conversation:
         response = st.session_state.conversation({'question': user_question})
         answer = response.get('answer', '').strip()
