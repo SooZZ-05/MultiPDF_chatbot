@@ -7,6 +7,7 @@ from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
+from utils import handle_greeting, handle_farewell
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
@@ -44,6 +45,14 @@ def get_conversation_chain(vectorstore):
     )
 
 def handle_userinput(user_question):
+    if greeting_reply:
+        st.chat_message("assistant").markdown(greeting_reply)
+        return
+
+    farewell_reply = handle_farewell(user_question)
+    if farewell_reply:
+        st.chat_message("assistant").markdown(farewell_reply)
+        return
     if st.session_state.conversation:
         # Send the user's question and get a response (from all relevant chunks)
         response = st.session_state.conversation({'question': user_question})
