@@ -1,8 +1,12 @@
 import random
 import difflib
 import re
+import pytz
 from langchain.chat_models import ChatOpenAI
 from PyPDF2 import PdfReader
+from fpdf import FPDF
+from datetime import datetime
+from io import BytesIO
 
 # Greeting and farewell keyword libraries
 GREETING_KEYWORDS = {"hi", "hello", "hey", "how are you", "good morning", "good afternoon", "greetings"}
@@ -102,3 +106,71 @@ def count_words_in_documents(labeled_docs):
             "word_count": word_count
         })
     return word_counts
+
+def estimate_multicell_height(pdf, text, width, line_height):
+    lines = pdf.multi_cell(width, line_height, text, split_only=True)
+    return len(lines) * line_height + 4 
+
+def save_chat_to_pdf(chat_history):
+    def strip_emojis(text):
+        return re.sub(r'[^\x00-\x7F]+', '', text)
+
+    def remove_newlines(text):
+        return re.sub(r'\s*\n\s*', ' ', text.strip())
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=False)
+    page_height = 297  # A4 height in mm
+    margin_top = 10
+    margin_bottom = 10
+    usable_height = page_height - margin_top - margin_bottom
+    line_height = 8
+    box_spacing = 6
+    box_width = 190
+
+    # Header
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 10, "Chat History", ln=True, align="C")
+    pdf.set_font("Arial", '', 10)
+    malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%B %d, %Y %H:%M")
+    pdf.cell(0, 10, f"Exported on {malaysia_time} (MYT)", ln=True, align="C")
+    pdf.ln(5)
+
+    pdf.set_font("Arial", '', 12)
+
+    for entry in chat_history:
+        user_msg = strip_emojis(entry["content"]).strip()
+        assistant_msg = remove_newlines(strip_emojis(entry["assistant"]).strip())
+
+        label_user = f"You:\n{user_msg}"
+        label_assistant = f"Assistant:\n{assistant_msg}"
+
+        # Estimate heights
+        user_box_height = estimate_multicell_height(pdf, label_user, box_width, line_height)
+        assistant_box_height = estimate_multicell_height(pdf, label_assistant, box_width, line_height)
+        total_pair_height = user_box_height + assistant_box_height + box_spacing
+
+        # If not enough space, start new page
+        if pdf.get_y() + total_pair_height > usable_height:
+            pdf.add_page()
+
+        # Render You box
+        y_start = pdf.get_y()
+        pdf.rect(10, y_start, box_width, user_box_height)
+        pdf.set_xy(12, y_start + 2)
+        pdf.multi_cell(0, line_height, label_user)
+        pdf.ln(2)
+
+        # Render Assistant box
+        y_start = pdf.get_y()
+        pdf.rect(10, y_start, box_width, assistant_box_height)
+        pdf.set_xy(12, y_start + 2)
+        pdf.set_text_color(0, 102, 204)
+        pdf.multi_cell(0, line_height, label_assistant)
+        pdf.set_text_color(0, 0, 0)
+        pdf.ln(4)
+
+    # Output PDF
+    pdf_bytes = pdf.output(dest='S').encode('latin1')
+    return BytesIO(pdf_bytes)
