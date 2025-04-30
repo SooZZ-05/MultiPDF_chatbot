@@ -1,6 +1,6 @@
 import random
 import difflib
-from langchian.chat_model import ChatOpenAI
+from langchain.chat_model import ChatOpenAI
 from PyPDF2 import PdfReader
 
 # Greeting and farewell keyword libraries
