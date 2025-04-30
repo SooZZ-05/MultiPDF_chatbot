@@ -59,12 +59,13 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append({"role": "assistant", "content": farewell_reply})
         return
     if st.session_state.conversation:
-        # Send the user's question and get a response (from all relevant chunks)
         response = st.session_state.conversation({'question': user_question})
-        
-        # Append the new question and response to the existing conversation history
+        answer = response.get('answer', '').strip()
+
+        if not answer or "I'm not sure" in answer or "I don't know" in answer:
+            answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
         st.session_state.chat_history.append({"role": "user", "content": user_question})
-        st.session_state.chat_history.append({"role": "assistant", "content": response['answer']})
+        st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
 def display_chat_history():
     chat_history_container = st.container()
