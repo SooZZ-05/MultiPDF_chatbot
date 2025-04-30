@@ -136,41 +136,51 @@ def save_chat_to_pdf(chat_history):
     malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%B %d, %Y %H:%M")
     pdf.cell(0, 10, f"Exported on {malaysia_time} (MYT)", ln=True, align="C")
     pdf.ln(5)
-
     pdf.set_font("Arial", '', 12)
 
-    for entry in chat_history:
-        user_msg = strip_emojis(entry["content"]).strip()
-        assistant_msg = remove_newlines(strip_emojis(entry["assistant"]).strip())
+    # Pair user and assistant messages
+    i = 0
+    while i < len(chat_history):
+        entry = chat_history[i]
+        if entry["role"] == "user":
+            user_msg = strip_emojis(entry["content"]).strip()
+            label_user = f"You:\n{user_msg}"
 
-        label_user = f"You:\n{user_msg}"
-        label_assistant = f"Assistant:\n{assistant_msg}"
+            # Look ahead to the assistant's reply
+            assistant_msg = ""
+            if i + 1 < len(chat_history) and chat_history[i + 1]["role"] == "assistant":
+                assistant_msg = remove_newlines(strip_emojis(chat_history[i + 1]["content"]).strip())
+                i += 1  # Skip assistant entry on next loop
+            label_assistant = f"Assistant:\n{assistant_msg}"
 
-        # Estimate heights
-        user_box_height = estimate_multicell_height(pdf, label_user, box_width, line_height)
-        assistant_box_height = estimate_multicell_height(pdf, label_assistant, box_width, line_height)
-        total_pair_height = user_box_height + assistant_box_height + box_spacing
+            # Estimate box heights
+            user_box_height = estimate_multicell_height(pdf, label_user, box_width, line_height)
+            assistant_box_height = estimate_multicell_height(pdf, label_assistant, box_width, line_height)
+            total_pair_height = user_box_height + assistant_box_height + box_spacing
 
-        # If not enough space, start new page
-        if pdf.get_y() + total_pair_height > usable_height:
-            pdf.add_page()
+            # Add new page if not enough space
+            if pdf.get_y() + total_pair_height > usable_height:
+                pdf.add_page()
 
-        # Render You box
-        y_start = pdf.get_y()
-        pdf.rect(10, y_start, box_width, user_box_height)
-        pdf.set_xy(12, y_start + 2)
-        pdf.multi_cell(0, line_height, label_user)
-        pdf.ln(2)
+            # Render user message
+            y_start = pdf.get_y()
+            pdf.rect(10, y_start, box_width, user_box_height)
+            pdf.set_xy(12, y_start + 2)
+            pdf.multi_cell(0, line_height, label_user)
+            pdf.ln(2)
 
-        # Render Assistant box
-        y_start = pdf.get_y()
-        pdf.rect(10, y_start, box_width, assistant_box_height)
-        pdf.set_xy(12, y_start + 2)
-        pdf.set_text_color(0, 102, 204)
-        pdf.multi_cell(0, line_height, label_assistant)
-        pdf.set_text_color(0, 0, 0)
-        pdf.ln(4)
+            # Render assistant message
+            y_start = pdf.get_y()
+            pdf.rect(10, y_start, box_width, assistant_box_height)
+            pdf.set_xy(12, y_start + 2)
+            pdf.set_text_color(0, 102, 204)
+            pdf.multi_cell(0, line_height, label_assistant)
+            pdf.set_text_color(0, 0, 0)
+            pdf.ln(4)
+
+        i += 1
 
     # Output PDF
     pdf_bytes = pdf.output(dest='S').encode('latin1')
     return BytesIO(pdf_bytes)
+
