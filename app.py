@@ -45,6 +45,7 @@ def get_conversation_chain(vectorstore):
     )
 
 def handle_userinput(user_question):
+    greeting_reply = handle_greeting(user_question)
     if greeting_reply:
         st.chat_message("assistant").markdown(greeting_reply)
         return
