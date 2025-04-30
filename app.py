@@ -107,7 +107,7 @@ def handle_userinput(user_question):
         answer = response.get('answer', '').strip()
         source_docs = response.get('source_documents', [])
         if not answer or not source_docs:
-                    answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
+            answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
         else:
             embedder = OpenAIEmbeddings()
             answer_embedding = embedder.embed_query(answer)
@@ -118,7 +118,7 @@ def handle_userinput(user_question):
                 sim = cosine_similarity(answer_embedding, chunk_embedding)
                 doc_similarities.append(sim)
             max_similarity = max(doc_similarities)
-            if max_similarity < 0.5:
+            if max_similarity < 0.7:
                 answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
     
         st.session_state.chat_history.append({"role": "user", "content": user_question})
