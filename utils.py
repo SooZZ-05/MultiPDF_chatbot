@@ -1,4 +1,5 @@
 import random
+import difflib
 from langchian.chat_model import ChatOpenAI
 
 # Greeting and farewell keyword libraries
@@ -61,3 +62,21 @@ def summarize_documents(labeled_docs):
 def is_summary_question(question: str) -> bool:
     summary_keywords = ["summary", "summarize", "overview", "main idea", "key points", "what is in", "content of"]
     return any(keyword in question.lower() for keyword in summary_keywords)
+
+def extract_target_doc_label(question: str, summaries: list, cutoff: float = 0.6) -> str:
+    question_lower = question.lower()
+    labels = [item['label'].lower() for item in summaries]
+    
+    matches = difflib.get_close_matches(question_lower, labels, n=1, cutoff=cutoff)
+
+    if matches:
+        matched_label_lower = matches[0]
+        for item in summaries:
+            if item['label'].lower() == matched_label_lower:
+                return item['label']
+    
+    for item in summaries:
+        if item['label'].lower() in question_lower:
+            return item['label']
+    
+    return None
