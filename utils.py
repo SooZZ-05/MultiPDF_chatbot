@@ -92,3 +92,13 @@ def extract_target_doc_label(question: str, summaries: list, cutoff: float = 0.6
 def is_wordcount_question(question: str) -> bool:
     keywords = ["word count", "how many words", "number of words", "words in", "wordcount"]
     return any(keyword in question.lower() for keyword in keywords)
+
+def count_words_in_documents(labeled_docs):
+    word_counts = []
+    for doc in labeled_docs:
+        word_count = len(doc["text"].split())
+        word_counts.append({
+            "label": doc["label"],
+            "word_count": word_count
+        })
+    return word_counts
