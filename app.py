@@ -155,8 +155,10 @@ def main():
         if pdf_docs and process_button:
             with st.spinner("Processing..."):
                 labeled_docs = get_labeled_documents(pdf_docs)
+                st.session_state.labeled_docs = labeled_docs
                 doc_summaries = summarize_documents(labeled_docs)
                 st.session_state.doc_summaries = doc_summaries
+                st.session_state.word_counts = count_words_in_documents(labeled_docs)
 
                 raw_text = "\n".join(doc["text"] for doc in labeled_docs)
                 # raw_text = get_pdf_text(pdf_docs)
