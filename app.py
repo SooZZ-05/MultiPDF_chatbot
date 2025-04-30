@@ -11,6 +11,7 @@ from langchain_community.embeddings import OpenAIEmbeddings
 from langchain.embeddings.base import Embeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain.memory import ConversationBufferMemory
 from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question, extract_target_doc_label, get_labeled_documents, is_wordcount_question, count_words_in_documents, save_chat_to_pdf
 
@@ -38,18 +39,48 @@ def get_vectorstore(text_chunks):
     embeddings = OpenAIEmbeddings()
     return FAISS.from_texts(texts=text_chunks, embedding=embeddings)
 
+# def get_conversation_chain(vectorstore):
+#     llm = ChatOpenAI(
+#         model_name="gpt-3.5-turbo",
+#         temperature=0.3,
+#         openai_api_key=os.getenv("OPENAI_API_KEY"),
+#         system="You are only allowed to answer questions based on the provided documents. If the answer is not in the documents, reply that you don't know."
+#     )
+#     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, output_key="answer")
+#     return ConversationalRetrievalChain.from_llm(
+#         llm=llm, retriever=vectorstore.as_retriever(search_kwargs={"k": 20}), memory=memory,
+#         return_source_documents=True,
+#         output_key="answer"
+#     )
+
 def get_conversation_chain(vectorstore):
+    system_message = SystemMessagePromptTemplate.from_template(
+        "You are only allowed to answer questions based on the provided documents. "
+        "If the answer is not in the documents, reply that you don't know."
+    )
+
+    human_message = HumanMessagePromptTemplate.from_template("{question}")
+    prompt = ChatPromptTemplate.from_messages([system_message, human_message])
+
     llm = ChatOpenAI(
         model_name="gpt-3.5-turbo",
         temperature=0.3,
-        openai_api_key=os.getenv("OPENAI_API_KEY"),
-        system="You are only allowed to answer questions based on the provided documents. If the answer is not in the documents, reply that you don't know."
+        openai_api_key=os.getenv("OPENAI_API_KEY")
     )
-    memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, output_key="answer")
-    return ConversationalRetrievalChain.from_llm(
-        llm=llm, retriever=vectorstore.as_retriever(search_kwargs={"k": 20}), memory=memory,
-        return_source_documents=True,
+
+    memory = ConversationBufferMemory(
+        memory_key="chat_history",
+        return_messages=True,
         output_key="answer"
+    )
+
+    return ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        retriever=vectorstore.as_retriever(search_kwargs={"k": 20}),
+        memory=memory,
+        return_source_documents=True,
+        output_key="answer",
+        prompt=prompt
     )
 
 def cosine_similarity(vec1, vec2):
