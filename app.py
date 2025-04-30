@@ -141,7 +141,7 @@ def handle_userinput(user_question):
             ]
 
             max_similarity = max(doc_similarities)
-            grounded = max_similarity >= 0.85
+            grounded = max_similarity >= 0.7
         
         if not grounded:
             answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
