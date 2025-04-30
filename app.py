@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import numpy as np
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
