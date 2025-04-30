@@ -1,5 +1,6 @@
 import random
 import difflib
+import re
 from langchain.chat_models import ChatOpenAI
 from PyPDF2 import PdfReader
 
