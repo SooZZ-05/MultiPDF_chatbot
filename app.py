@@ -168,17 +168,17 @@ def main():
 
             st.success("PDFs successfully processed!")
 
-    st.subheader("Chat Options")
-    save_chat_button = st.button("💾 Save Chat to PDF")
-    if save_chat_button and st.session_state.chat_history:
-        chat_pdf = save_chat_to_pdf(st.session_state.chat_history)
-        st.download_button(
-            label="📥 Download Chat History PDF",
-            data=chat_pdf,
-            file_name="chat_history.pdf",
-            mime="application/pdf"
-        )
-        st.success("Chat history saved as PDF!")
+        st.subheader("Chat Options")
+        save_chat_button = st.button("💾 Save Chat to PDF")
+        if save_chat_button and st.session_state.chat_history:
+            chat_pdf = save_chat_to_pdf(st.session_state.chat_history)
+            st.download_button(
+                label="📥 Download Chat History PDF",
+                data=chat_pdf,
+                file_name="chat_history.pdf",
+                mime="application/pdf"
+            )
+            st.success("Chat history saved as PDF!")
 
     # Disable user input until the PDFs are uploaded and processed
     if st.session_state.conversation:
