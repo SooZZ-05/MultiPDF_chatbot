@@ -4,6 +4,7 @@ from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
 from langchain_community.embeddings import OpenAIEmbeddings
+from langchain.embeddings.base import Embeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
@@ -46,6 +47,9 @@ def get_conversation_chain(vectorstore):
         output_key="answer"
     )
 
+def cosine_similarity(vec1, vec2):
+    return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+
 def handle_userinput(user_question):
     greeting_reply = handle_greeting(user_question)
     if greeting_reply:
@@ -64,9 +68,20 @@ def handle_userinput(user_question):
         response = st.session_state.conversation({'question': user_question})
         answer = response.get('answer', '').strip()
         source_docs = response.get('source_documents', [])
+        if not answer or not source_docs:
+                    answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
+                else:
+                    embedder = OpenAIEmbeddings()
+                    answer_embedding = embedder.embed_query(answer)
 
-        if not answer or "I'm not sure" in answer or "I don't know" in answer or not source_docs:
-            answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
+                    doc_similarities = []
+                    for doc in source_docs:
+                        chunk_embedding = embedder.embed_query(doc.page_content)
+                        sim = cosine_similarity(answer_embedding, chunk_embedding)
+                        doc_similarities.append(sim)
+                    max_similarity = max(doc_similarities)
+                    if max_similarity < 0.75:
+                        answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
         
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
