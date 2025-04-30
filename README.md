@@ -1,6 +1,6 @@
 # 💬 Chat with Multiple PDFs (Laptop Recommendation ChatBot)
 
-This Streamlit app allows users to upload and chat with multiple PDF documents using OpenAI's GPT model. It can summarize PDFs, count words, and provide intelligent, context-aware responses. The app also supports greetings/farewell detection and converts chatbot replies to speech.
+This Streamlit app allows users to upload and chat with multiple PDF documents (mainly using pdf related to laptop) using OpenAI's GPT model. It can summarize PDFs, count words, and provide intelligent, context-aware responses. The app also supports greetings/farewell detection and converts chatbot replies to speech.
 
 ---
 
