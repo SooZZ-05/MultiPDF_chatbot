@@ -121,29 +121,29 @@ def handle_userinput(user_question):
     #         if max_similarity < 0.7:
     #             answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
 
-        if st.session_state.conversation:
-            response = st.session_state.conversation({'question': user_question})
-            answer = response.get('answer', '').strip()
-            source_docs = response.get('source_documents', [])
+    if st.session_state.conversation:
+        response = st.session_state.conversation({'question': user_question})
+        answer = response.get('answer', '').strip()
+        source_docs = response.get('source_documents', [])
 
-            grounded = False
-            if answer and source_docs:
-                embedder = OpenAIEmbeddings()
-                answer_embedding = embedder.embed_query(answer)
+        grounded = False
+        if answer and source_docs:
+            embedder = OpenAIEmbeddings()
+            answer_embedding = embedder.embed_query(answer)
         
-                doc_texts = [doc.page_content for doc in source_docs]
-                chunk_embeddings = embedder.embed_documents(doc_texts)
+            doc_texts = [doc.page_content for doc in source_docs]
+            chunk_embeddings = embedder.embed_documents(doc_texts)
 
-                doc_similarities = [
-                    cosine_similarity(answer_embedding, chunk_embedding)
-                    for chunk_embedding in chunk_embeddings
-                ]
+            doc_similarities = [
+                cosine_similarity(answer_embedding, chunk_embedding)
+                for chunk_embedding in chunk_embeddings
+            ]
 
-                max_similarity = max(doc_similarities)
-                grounded = max_similarity >= 0.7
+            max_similarity = max(doc_similarities)
+            grounded = max_similarity >= 0.7
         
-            if not grounded:
-                answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
+        if not grounded:
+            answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
     
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
