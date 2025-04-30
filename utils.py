@@ -65,25 +65,25 @@ def is_summary_question(question: str) -> bool:
     summary_keywords = ["summary", "summarize", "overview", "main idea", "key points", "what is in", "content of"]
     return any(keyword in question.lower() for keyword in summary_keywords)
 
-def extract_target_doc_label(question: str, summaries: list, cutoff: float = 0.6) -> str:
+def extract_target_doc_label(question: str, docs: list, cutoff: float = 0.6) -> str:
     question_lower = question.lower()
-    labels = [item['label'].lower() for item in summaries]
+    labels = [item['label'].lower() for item in docs]
 
     doc_num_match = re.search(r"(document|doc|file)\s*(\d+)", question_lower)
     if doc_num_match:
         doc_num = int(doc_num_match.group(2))
-        if 1 <= doc_num <= len(summaries):
-            return summaries[doc_num - 1]["label"]
+        if 1 <= doc_num <= len(docs):
+            return docs[doc_num - 1]["label"]
     
     matches = difflib.get_close_matches(question_lower, labels, n=1, cutoff=cutoff)
 
     if matches:
         matched_label_lower = matches[0]
-        for item in summaries:
+        for item in docs:
             if item['label'].lower() == matched_label_lower:
                 return item['label']
     
-    for item in summaries:
+    for item in docs:
         if item['label'].lower() in question_lower:
             return item['label']
     
