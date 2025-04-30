@@ -9,7 +9,7 @@ from langchain.embeddings.base import Embeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
-from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question
+from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question, extract_target_doc_label
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
