@@ -69,11 +69,11 @@ def extract_target_doc_label(question: str, summaries: list, cutoff: float = 0.6
     question_lower = question.lower()
     labels = [item['label'].lower() for item in summaries]
 
-    doc_num_match = re.search(r"document\s*(\d+)", question_lower)
+    doc_num_match = re.search(r"(document|doc|file)\s*(\d+)", question_lower)
     if doc_num_match:
-        doc_index = int(doc_num_match.group(1)) - 1
-        if 0 <= doc_index < len(summaries):
-            return summaries[doc_index]['label']
+        doc_num = int(doc_num_match.group(2))
+        if 1 <= doc_num <= len(summaries):
+            return summaries[doc_num - 1]["label"]
     
     matches = difflib.get_close_matches(question_lower, labels, n=1, cutoff=cutoff)
 
