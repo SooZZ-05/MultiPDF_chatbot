@@ -1,6 +1,9 @@
 import streamlit as st
 import os
 import numpy as np
+import base64
+from gtts import gTTS
+from io import BytesIO
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
@@ -121,16 +124,37 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
+def text_to_speech_base64(text, lang="en"):
+    tts = gTTS(text, lang=lang)
+    mp3_fp = BytesIO()
+    tts.write_to_fp(mp3_fp)
+    mp3_fp.seek(0)
+    return mp3_fp
+
+# def display_chat_history():
+#     chat_history_container = st.container()
+#     for message in st.session_state.chat_history:
+#         if len(message["content"]) > 0:
+#             if message["role"] == "user":
+#                 with st.chat_message("user"):
+#                     st.markdown(message["content"])
+#             elif message["role"] == "assistant":
+#                 with st.chat_message("assistant"):
+#                     st.markdown(message["content"])
+
 def display_chat_history():
     chat_history_container = st.container()
-    for message in st.session_state.chat_history:
+    for i, message in enumerate(st.session_state.chat_history):
         if len(message["content"]) > 0:
-            if message["role"] == "user":
-                with st.chat_message("user"):
-                    st.markdown(message["content"])
-            elif message["role"] == "assistant":
-                with st.chat_message("assistant"):
-                    st.markdown(message["content"])
+            with chat_history_container:
+                col1, col2 = st.columns([10, 1])
+                with col1:
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])
+                with col2:
+                    if st.button("🔊", key=f"play_{i}"):
+                        audio_fp = text_to_speech_base64(message["content"])
+                        st.audio(audio_fp.read(), format="audio/mp3")
 
 def main():
     set_openai_api_key()
