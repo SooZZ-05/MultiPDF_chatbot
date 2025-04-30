@@ -154,7 +154,7 @@ def display_chat_history():
                 with col2:
                     if st.button("🔊", key=f"play_{i}"):
                         audio_fp = text_to_speech_base64(message["content"])
-                        st.audio(audio_fp.read(), format="audio/mp3")
+                        st.audio(audio_fp.read(), format="audio/mp3", key=f"audio_{i}")
 
 def main():
     set_openai_api_key()
