@@ -102,25 +102,6 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append({"role": "assistant", "content": word_count_response})
         return
         
-    # if st.session_state.conversation:
-    #     response = st.session_state.conversation({'question': user_question})
-    #     answer = response.get('answer', '').strip()
-    #     source_docs = response.get('source_documents', [])
-    #     if not answer or not source_docs:
-    #         answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
-    #     else:
-    #         embedder = OpenAIEmbeddings()
-    #         answer_embedding = embedder.embed_query(answer)
-
-    #         doc_similarities = []
-    #         for doc in source_docs:
-    #             chunk_embedding = embedder.embed_query(doc.page_content)
-    #             sim = cosine_similarity(answer_embedding, chunk_embedding)
-    #             doc_similarities.append(sim)
-    #         max_similarity = max(doc_similarities)
-    #         if max_similarity < 0.7:
-    #             answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
-
     if st.session_state.conversation:
         response = st.session_state.conversation({'question': user_question})
         answer = response.get('answer', '').strip()
