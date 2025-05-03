@@ -151,52 +151,24 @@ def auto_play_audio(text, lang="en"):
     """
     return audio_html
 
-def stop_audio():
-    if pygame.mixer.music.get_busy():
-        pygame.mixer.music.stop()
-        st.success("Audio stopped!")
         
-# def display_chat_history():
-#     chat_history_container = st.container()
-    
-#     for i, message in enumerate(st.session_state.chat_history):
-#         if len(message["content"]) > 0:
-#             with chat_history_container:
-#                 col1, col2 = st.columns([10, 1])
-#                 with col1:
-#                     with st.chat_message(message["role"]):
-#                         st.markdown(message["content"])
-#                 with col2:
-#                     if st.button("🔊", key=f"play_{i}"):
-#                         # audio_fp = text_to_speech_base64(message["content"])
-#                         # st.audio(audio_fp.read(), format="audio/mp3")
-#                         audio_html = auto_play_audio(message["content"])
-#                         st.markdown(audio_html, unsafe_allow_html=True)
-
 def display_chat_history():
-    
-    # Audio control bar (top of chat)
-    st.markdown("---")
-    col1, col2 = st.columns([1, 10])
-    with col1:
-        if st.button("⏹️ **Stop Audio**", type="primary", key="stop_audio"):
-            pygame.mixer.music.stop()
-            st.toast("Audio stopped!")
-    st.markdown("---")
-
-    # Chat messages
     chat_history_container = st.container()
+    
     for i, message in enumerate(st.session_state.chat_history):
         if len(message["content"]) > 0:
             with chat_history_container:
-               # col1, col2 = st.columns([10, 1])
+                col1, col2 = st.columns([10, 1])
                 with col1:
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])
                 with col2:
                     if st.button("🔊", key=f"play_{i}"):
+                        # audio_fp = text_to_speech_base64(message["content"])
+                        # st.audio(audio_fp.read(), format="audio/mp3")
                         audio_html = auto_play_audio(message["content"])
                         st.markdown(audio_html, unsafe_allow_html=True)
+
 
 def main():
     set_openai_api_key()
