@@ -206,14 +206,7 @@ def main():
 
             st.success("PDFs successfully processed!")
 
-        st.subheader("Chat Options")
-        # Audio controls section
-        st.subheader("🎵 Audio Controls")
-        if st.button("⏹️ Stop Playback", key="audio_stop"):
-            pygame.mixer.music.stop()
-            st.success("Audio stopped!")
-            st.markdown("---")
-            
+        
         save_chat_button = st.button("💾 Save Chat to PDF")
         if save_chat_button and st.session_state.chat_history:
             chat_pdf = save_chat_to_pdf(st.session_state.chat_history)
