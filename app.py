@@ -154,8 +154,18 @@ def auto_play_audio(text, lang="en"):
     """
     return audio_html
 
+def stop_audio():
+    if pygame.mixer.music.get_busy():
+        pygame.mixer.music.stop()
+        st.success("Audio stopped!")
+
 def display_chat_history():
     chat_history_container = st.container()
+
+    # Add a stop button at the top
+    if st.button("⏹️ Stop Audio", key="stop_audio"):
+        stop_audio()
+    
     for i, message in enumerate(st.session_state.chat_history):
         if len(message["content"]) > 0:
             with chat_history_container:
@@ -229,21 +239,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-st.title("Audio Playback with Stop Button")
-
-text_input = st.text_input("Enter text to speak:", "Hello, this is a test")
-lang = st.selectbox("Select language:", ["en", "es", "fr"])
-
-if st.button("Play Audio"):
-    tts = gTTS(text_input, lang=lang)
-    mp3_fp = io.BytesIO()
-    tts.write_to_fp(mp3_fp)
-    mp3_fp.seek(0)
-    
-    pygame.mixer.music.load(mp3_fp)
-    pygame.mixer.music.play()
-
-if st.button("Stop Audio"):
-    pygame.mixer.music.stop()
-    st.success("Audio stopped!")
