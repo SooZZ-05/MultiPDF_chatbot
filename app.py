@@ -158,44 +158,33 @@ def stop_audio():
     if pygame.mixer.music.get_busy():
         pygame.mixer.music.stop()
         st.success("Audio stopped!")
-
-# Add this at the top of `main()`
-st.markdown(
-    """
-    <style>
-    .fixed-audio-controls {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        z-index: 1000;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+        
+# def display_chat_history():
+#     chat_history_container = st.container()
+    
+#     for i, message in enumerate(st.session_state.chat_history):
+#         if len(message["content"]) > 0:
+#             with chat_history_container:
+#                 col1, col2 = st.columns([10, 1])
+#                 with col1:
+#                     with st.chat_message(message["role"]):
+#                         st.markdown(message["content"])
+#                 with col2:
+#                     if st.button("🔊", key=f"play_{i}"):
+#                         # audio_fp = text_to_speech_base64(message["content"])
+#                         # st.audio(audio_fp.read(), format="audio/mp3")
+#                         audio_html = auto_play_audio(message["content"])
+#                         st.markdown(audio_html, unsafe_allow_html=True)
 
 def display_chat_history():
+    # Audio control in the sidebar (persistent and visible)
+    with st.sidebar:
+        if st.button("⏹️ Stop Audio", key="stop_audio"):
+            pygame.mixer.music.stop()
+            st.toast("Audio stopped!")
 
-     # Floating audio controls (top-right)
-    st.markdown(
-        """
-        <div class="fixed-audio-controls">
-            <button onclick="window.parent.document.querySelector('audio').pause()">⏹️ Stop</button>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    
+    # Chat messages
     chat_history_container = st.container()
-
-    # Audio control bar (fixed at the top)
-    with st.container():
-        col_left, col_right = st.columns([10, 1])
-        with col_right:
-            if st.button("⏹️ Stop Audio", key="stop_audio"):
-                pygame.mixer.music.stop()
-                st.rerun()  # Refresh to update UI
-    
     for i, message in enumerate(st.session_state.chat_history):
         if len(message["content"]) > 0:
             with chat_history_container:
@@ -205,8 +194,6 @@ def display_chat_history():
                         st.markdown(message["content"])
                 with col2:
                     if st.button("🔊", key=f"play_{i}"):
-                        # audio_fp = text_to_speech_base64(message["content"])
-                        # st.audio(audio_fp.read(), format="audio/mp3")
                         audio_html = auto_play_audio(message["content"])
                         st.markdown(audio_html, unsafe_allow_html=True)
 
