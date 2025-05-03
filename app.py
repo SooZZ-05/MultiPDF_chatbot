@@ -159,7 +159,33 @@ def stop_audio():
         pygame.mixer.music.stop()
         st.success("Audio stopped!")
 
+# Add this at the top of `main()`
+st.markdown(
+    """
+    <style>
+    .fixed-audio-controls {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 def display_chat_history():
+
+     # Floating audio controls (top-right)
+    st.markdown(
+        """
+        <div class="fixed-audio-controls">
+            <button onclick="window.parent.document.querySelector('audio').pause()">⏹️ Stop</button>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
     chat_history_container = st.container()
 
     # Audio control bar (fixed at the top)
