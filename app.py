@@ -177,6 +177,7 @@ def auto_play_audio(text, lang="en"):
     return audio_html
 
 
+
 def display_chat_history():
     chat_history_container = st.container()
     for i, message in enumerate(st.session_state.chat_history):
