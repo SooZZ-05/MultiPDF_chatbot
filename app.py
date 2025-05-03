@@ -151,32 +151,29 @@ def text_to_speech_base64(text, lang="en"):
 #     """
 #     return audio_html
 
-def generate_audio_html(text, lang='en'):
-    # Convert text to speech
+def generate_audio_player_with_controls(text, lang='en'):
+    # Generate audio from text
     tts = gTTS(text, lang=lang)
     mp3_fp = BytesIO()
     tts.write_to_fp(mp3_fp)
     mp3_fp.seek(0)
 
-    # Convert MP3 to base64
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
-    # Return HTML with embedded audio and control buttons
-    html = f"""
-    <html>
-    <body>
-        <audio id="myAudio" controls style="width: 100%;">
+    # HTML audio player with Play, Pause, Stop buttons
+    audio_html = f"""
+    <div style="margin-top: 10px;">
+        <audio id="audioPlayer" style="width: 100%;">
             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-            Your browser does not support the audio element.
         </audio>
-        <br><br>
-        <button onclick="document.getElementById('myAudio').play()">▶️ Play</button>
-        <button onclick="document.getElementById('myAudio').pause()">⏸️ Pause</button>
-        <button onclick="var a=document.getElementById('myAudio'); a.pause(); a.currentTime=0;">⏹️ Stop</button>
-    </body>
-    </html>
+        <div style="margin-top: 5px;">
+            <button onclick="document.getElementById('audioPlayer').play()">▶️ Play</button>
+            <button onclick="document.getElementById('audioPlayer').pause()">⏸️ Pause</button>
+            <button onclick="let a = document.getElementById('audioPlayer'); a.pause(); a.currentTime = 0;">⏹️ Stop</button>
+        </div>
+    </div>
     """
-    return html
+    return audio_html
 
 def display_chat_history():
     chat_history_container = st.container()
