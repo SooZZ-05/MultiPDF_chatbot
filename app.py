@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import numpy as np
 import base64
-import pygame
 from gtts import gTTS
 from io import BytesIO
 from PyPDF2 import PdfReader
@@ -15,8 +14,6 @@ from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question, extract_target_doc_label, get_labeled_documents, is_wordcount_question, count_words_in_documents, save_chat_to_pdf
 
-# Initialize pygame mixer
-pygame.mixer.init()
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
