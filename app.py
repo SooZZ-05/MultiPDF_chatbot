@@ -174,7 +174,8 @@ def stop_audio():
 #                         st.markdown(audio_html, unsafe_allow_html=True)
 
 def display_chat_history():
-   # Audio control bar (top of chat)
+    
+    # Audio control bar (top of chat)
     st.markdown("---")
     col1, col2 = st.columns([1, 10])
     with col1:
@@ -188,7 +189,7 @@ def display_chat_history():
     for i, message in enumerate(st.session_state.chat_history):
         if len(message["content"]) > 0:
             with chat_history_container:
-                col1, col2 = st.columns([10, 1])
+               # col1, col2 = st.columns([10, 1])
                 with col1:
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])
@@ -234,6 +235,13 @@ def main():
             st.success("PDFs successfully processed!")
 
         st.subheader("Chat Options")
+        # Audio controls section
+        st.subheader("🎵 Audio Controls")
+        if st.button("⏹️ Stop Playback", key="audio_stop"):
+            pygame.mixer.music.stop()
+            st.success("Audio stopped!")
+            st.markdown("---")
+            
         save_chat_button = st.button("💾 Save Chat to PDF")
         if save_chat_button and st.session_state.chat_history:
             chat_pdf = save_chat_to_pdf(st.session_state.chat_history)
