@@ -177,11 +177,14 @@ def stop_audio():
 #                         st.markdown(audio_html, unsafe_allow_html=True)
 
 def display_chat_history():
-    # Audio control in the sidebar (persistent and visible)
-    with st.sidebar:
-        if st.button("⏹️ Stop Audio", key="stop_audio"):
+   # Audio control bar (top of chat)
+    st.markdown("---")
+    col1, col2 = st.columns([1, 10])
+    with col1:
+        if st.button("⏹️ **Stop Audio**", type="primary", key="stop_audio"):
             pygame.mixer.music.stop()
             st.toast("Audio stopped!")
+    st.markdown("---")
 
     # Chat messages
     chat_history_container = st.container()
