@@ -136,6 +136,20 @@ def text_to_speech_base64(text, lang="en"):
     mp3_fp.seek(0)
     return mp3_fp
 
+# def auto_play_audio(text, lang="en"):
+#     tts = gTTS(text, lang=lang)
+#     mp3_fp = BytesIO()
+#     tts.write_to_fp(mp3_fp)
+#     mp3_fp.seek(0)
+#     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
+
+#     audio_html = f"""
+#         <audio autoplay="true" style="display:none">
+#             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+#         </audio>
+#     """
+#     return audio_html
+
 def auto_play_audio(text, lang="en"):
     tts = gTTS(text, lang=lang)
     mp3_fp = BytesIO()
@@ -144,11 +158,24 @@ def auto_play_audio(text, lang="en"):
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
     audio_html = f"""
-        <audio autoplay="true" style="display:none">
+        <audio id="audioPlayer" autoplay="true" style="display:none">
             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
         </audio>
+        <script>
+            var audioElement = document.getElementById('audioPlayer');
+            
+            // Function to stop the audio
+            function stopAudio() {{
+                audioElement.pause();
+                audioElement.currentTime = 0;  // Reset to the beginning
+            }}
+
+            // Optionally, you could call stopAudio() at any point in your code
+            // or trigger it with a button or event.
+        </script>
     """
     return audio_html
+
 
 def display_chat_history():
     chat_history_container = st.container()
