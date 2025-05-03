@@ -162,9 +162,13 @@ def stop_audio():
 def display_chat_history():
     chat_history_container = st.container()
 
-    # Add a stop button at the top
-    if st.button("⏹️ Stop Audio", key="stop_audio"):
-        stop_audio()
+    # Audio control bar (fixed at the top)
+    with st.container():
+        col_left, col_right = st.columns([10, 1])
+        with col_right:
+            if st.button("⏹️ Stop Audio", key="stop_audio"):
+                pygame.mixer.music.stop()
+                st.rerun()  # Refresh to update UI
     
     for i, message in enumerate(st.session_state.chat_history):
         if len(message["content"]) > 0:
