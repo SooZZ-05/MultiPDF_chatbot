@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import numpy as np
 import base64
-import streamlit.components.v1 as components
 from gtts import gTTS
 from io import BytesIO
 from PyPDF2 import PdfReader
@@ -137,43 +136,20 @@ def text_to_speech_base64(text, lang="en"):
     mp3_fp.seek(0)
     return mp3_fp
 
-# def auto_play_audio(text, lang="en"):
-#     tts = gTTS(text, lang=lang)
-#     mp3_fp = BytesIO()
-#     tts.write_to_fp(mp3_fp)
-#     mp3_fp.seek(0)
-#     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
-
-#     audio_html = f"""
-#         <audio autoplay="true" style="display:none">
-#             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-#         </audio>
-#     """
-#     return audio_html
-
-def generate_audio_player_with_controls(text, lang='en'):
-    # Generate audio from text
+def auto_play_audio(text, lang="en"):
     tts = gTTS(text, lang=lang)
     mp3_fp = BytesIO()
     tts.write_to_fp(mp3_fp)
     mp3_fp.seek(0)
-
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
-    # HTML audio player with Play, Pause, Stop buttons
     audio_html = f"""
-    <div style="margin-top: 10px;">
-        <audio id="audioPlayer" style="width: 100%;">
+        <audio autoplay="true" style="display:none">
             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
         </audio>
-        <div style="margin-top: 5px;">
-            <button onclick="document.getElementById('audioPlayer').play()">▶️ Play</button>
-            <button onclick="document.getElementById('audioPlayer').pause()">⏸️ Pause</button>
-            <button onclick="let a = document.getElementById('audioPlayer'); a.pause(); a.currentTime = 0;">⏹️ Stop</button>
-        </div>
-    </div>
     """
     return audio_html
+
 
 def display_chat_history():
     chat_history_container = st.container()
@@ -250,11 +226,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-st.title("🔊 Audio Playback Test")
-
-text = st.text_input("Enter text:", "Hello, Streamlit!")
-
-if st.button("Generate Audio"):
-    html_code = generate_audio_controls(text)
-    components.html(html_code, height=250)  # 🔥 KEY: height must be >200
