@@ -152,52 +152,23 @@ def auto_play_audio(text, lang="en"):
     return audio_html
 
         
-# def display_chat_history():
-#     chat_history_container = st.container()
-    
-#     for i, message in enumerate(st.session_state.chat_history):
-#         if len(message["content"]) > 0:
-#             with chat_history_container:
-#                 col1, col2 = st.columns([10, 1])
-#                 with col1:
-#                     with st.chat_message(message["role"]):
-#                         st.markdown(message["content"])
-#                 with col2:
-#                     if st.button("🔊", key=f"play_{i}"):
-#                         # audio_fp = text_to_speech_base64(message["content"])
-#                         # st.audio(audio_fp.read(), format="audio/mp3")
-#                         audio_html = auto_play_audio(message["content"])
-#                         st.markdown(audio_html, unsafe_allow_html=True)
-
-
 def display_chat_history():
     chat_history_container = st.container()
     
     for i, message in enumerate(st.session_state.chat_history):
         if len(message["content"]) > 0:
             with chat_history_container:
-                col1, col2, col3 = st.columns([10, 1, 1])  # Added an extra column for stop button
+                col1, col2 = st.columns([10, 1])
                 with col1:
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])
                 with col2:
                     if st.button("🔊", key=f"play_{i}"):
+                        # audio_fp = text_to_speech_base64(message["content"])
+                        # st.audio(audio_fp.read(), format="audio/mp3")
                         audio_html = auto_play_audio(message["content"])
-                        st.session_state[f'audio_{i}'] = audio_html  # Store audio HTML in session state
                         st.markdown(audio_html, unsafe_allow_html=True)
-                with col3:
-                    if st.button("⏹", key=f"stop_{i}"):
-                        # JavaScript to stop all audio elements
-                        stop_audio_js = """
-                        <script>
-                            var sounds = document.getElementsByTagName('audio');
-                            for(var i=0; i<sounds.length; i++) {
-                                sounds[i].pause();
-                                sounds[i].currentTime = 0;
-                            }
-                        </script>
-                        """
-                        st.markdown(stop_audio_js, unsafe_allow_html=True)
+
 
 def main():
     set_openai_api_key()
