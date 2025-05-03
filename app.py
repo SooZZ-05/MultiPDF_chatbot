@@ -2,6 +2,8 @@ import streamlit as st
 import os
 import numpy as np
 import base64
+import base64
+import streamlit.components.v1 as components
 from gtts import gTTS
 from io import BytesIO
 from PyPDF2 import PdfReader
