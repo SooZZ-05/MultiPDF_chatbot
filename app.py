@@ -173,13 +173,6 @@ def get_audio_html(text, lang='en'):
     """
     return audio_html
 
-# --- Streamlit App UI ---
-st.title("Manual Audio Control Example")
-
-text = st.text_input("Enter text to speak:", "Hello, this is a test.")
-if st.button("Generate Audio"):
-    html_code = get_audio_html(text)
-    components.html(html_code, height=150)
 
 def display_chat_history():
     chat_history_container = st.container()
