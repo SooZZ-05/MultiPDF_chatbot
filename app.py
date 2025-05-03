@@ -150,19 +150,34 @@ def text_to_speech_base64(text, lang="en"):
 #     """
 #     return audio_html
 
-def auto_play_audio_with_controls(text, lang="en"):
+def get_audio_html(text, lang='en'):
+    # Generate MP3 audio using gTTS
     tts = gTTS(text, lang=lang)
     mp3_fp = BytesIO()
     tts.write_to_fp(mp3_fp)
     mp3_fp.seek(0)
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
+    # Embed audio with custom JS controls
     audio_html = f"""
-        <audio controls autoplay="true" style="display:block">
-            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-        </audio>
+    <audio id="myAudio" controls style="width: 100%; margin-top: 10px;">
+        <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+    <br>
+    <button onclick="document.getElementById('myAudio').play()">▶️ Play</button>
+    <button onclick="document.getElementById('myAudio').pause()">⏸️ Pause</button>
+    <button onclick="document.getElementById('myAudio').pause(); document.getElementById('myAudio').currentTime = 0;">⏹️ Stop</button>
     """
     return audio_html
+
+# --- Streamlit App UI ---
+st.title("Manual Audio Control Example")
+
+text = st.text_input("Enter text to speak:", "Hello, this is a test.")
+if st.button("Generate Audio"):
+    html_code = get_audio_html(text)
+    components.html(html_code, height=150)
 
 def display_chat_history():
     chat_history_container = st.container()
