@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import numpy as np
 import base64
-import base64
 import streamlit.components.v1 as components
 from gtts import gTTS
 from io import BytesIO
@@ -152,27 +151,29 @@ def text_to_speech_base64(text, lang="en"):
 #     """
 #     return audio_html
 
-def get_audio_html(text, lang='en'):
-    # Generate MP3 audio using gTTS
+def generate_audio_html(text, lang='en'):
+    # Generate speech from text
     tts = gTTS(text, lang=lang)
     mp3_fp = BytesIO()
     tts.write_to_fp(mp3_fp)
     mp3_fp.seek(0)
+
+    # Encode audio to base64
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
-    # Embed audio with custom JS controls
-    audio_html = f"""
-    <audio id="myAudio" controls style="width: 100%; margin-top: 10px;">
+    # HTML with audio controls and play/pause/stop buttons
+    html = f"""
+    <audio id="myAudio" style="width: 100%;" controls>
         <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
         Your browser does not support the audio element.
     </audio>
-    <br>
-    <button onclick="document.getElementById('myAudio').play()">▶️ Play</button>
-    <button onclick="document.getElementById('myAudio').pause()">⏸️ Pause</button>
-    <button onclick="document.getElementById('myAudio').pause(); document.getElementById('myAudio').currentTime = 0;">⏹️ Stop</button>
+    <div style="margin-top: 10px;">
+        <button onclick="document.getElementById('myAudio').play()">▶️ Play</button>
+        <button onclick="document.getElementById('myAudio').pause()">⏸️ Pause</button>
+        <button onclick="var a=document.getElementById('myAudio'); a.pause(); a.currentTime=0;">⏹️ Stop</button>
+    </div>
     """
-    return audio_html
-
+    return html
 
 def display_chat_history():
     chat_history_container = st.container()
