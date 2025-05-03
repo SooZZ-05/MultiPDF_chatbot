@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import numpy as np
 import base64
+import pygame
 from gtts import gTTS
 from io import BytesIO
 from PyPDF2 import PdfReader
@@ -13,6 +14,9 @@ from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question, extract_target_doc_label, get_labeled_documents, is_wordcount_question, count_words_in_documents, save_chat_to_pdf
+
+# Initialize pygame mixer
+pygame.mixer.init()
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
@@ -150,7 +154,6 @@ def auto_play_audio(text, lang="en"):
     """
     return audio_html
 
-
 def display_chat_history():
     chat_history_container = st.container()
     for i, message in enumerate(st.session_state.chat_history):
@@ -226,3 +229,21 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+st.title("Audio Playback with Stop Button")
+
+text_input = st.text_input("Enter text to speak:", "Hello, this is a test")
+lang = st.selectbox("Select language:", ["en", "es", "fr"])
+
+if st.button("Play Audio"):
+    tts = gTTS(text_input, lang=lang)
+    mp3_fp = io.BytesIO()
+    tts.write_to_fp(mp3_fp)
+    mp3_fp.seek(0)
+    
+    pygame.mixer.music.load(mp3_fp)
+    pygame.mixer.music.play()
+
+if st.button("Stop Audio"):
+    pygame.mixer.music.stop()
+    st.success("Audio stopped!")
