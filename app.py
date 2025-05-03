@@ -152,26 +152,29 @@ def text_to_speech_base64(text, lang="en"):
 #     return audio_html
 
 def generate_audio_html(text, lang='en'):
-    # Generate speech from text
+    # Convert text to speech
     tts = gTTS(text, lang=lang)
     mp3_fp = BytesIO()
     tts.write_to_fp(mp3_fp)
     mp3_fp.seek(0)
 
-    # Encode audio to base64
+    # Convert MP3 to base64
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
-    # HTML with audio controls and play/pause/stop buttons
+    # Return HTML with embedded audio and control buttons
     html = f"""
-    <audio id="myAudio" style="width: 100%;" controls>
-        <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-        Your browser does not support the audio element.
-    </audio>
-    <div style="margin-top: 10px;">
+    <html>
+    <body>
+        <audio id="myAudio" controls style="width: 100%;">
+            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+        <br><br>
         <button onclick="document.getElementById('myAudio').play()">▶️ Play</button>
         <button onclick="document.getElementById('myAudio').pause()">⏸️ Pause</button>
         <button onclick="var a=document.getElementById('myAudio'); a.pause(); a.currentTime=0;">⏹️ Stop</button>
-    </div>
+    </body>
+    </html>
     """
     return html
 
