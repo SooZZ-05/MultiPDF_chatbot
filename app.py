@@ -137,14 +137,13 @@ def auto_play_audio(text, lang="en", key="audio"):
     mp3_fp.seek(0)
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
-    html_code = f"""
+    audio_html = f"""
     <audio id="{key}" controls style="width: 100%; max-width: 100%;">
         <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
         Your browser does not support the audio element.
     </audio>
     """
-    
-    components.html(html_code, height=50, scrolling=False)
+    components.html(audio_html, height=60, scrolling=False)
 
 def display_chat_history():
     chat_history_container = st.container()
