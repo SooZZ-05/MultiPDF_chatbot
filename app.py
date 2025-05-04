@@ -185,8 +185,9 @@ def main():
         st.subheader("Your Documents")
         docs = st.session_state.get("docs", [])
     
-        # Block file upload if there are already 3 documents uploaded
+        # Check if user has uploaded 3 or more files
         if len(docs) < 3:
+            # Allow file upload only if there are less than 3 documents uploaded
             new_docs = st.file_uploader(
                 "📄 Upload documents (PDF, DOCX, or TXT)",
                 type=["pdf", "docx", "txt"],
@@ -208,9 +209,8 @@ def main():
                     if doc not in docs:
                         docs.append(doc)
                 st.session_state.docs = docs
-    
         else:
-            # If 3 files are uploaded, show a warning and provide the "Clear All" button
+            # Block file upload if 3 files have been uploaded
             st.warning("You have uploaded 3 documents. You cannot upload more.")
             
             clear_button = st.button("Clear All Documents")
@@ -221,7 +221,6 @@ def main():
                 st.success("All documents have been cleared. You can upload new documents now.")
     
                 # Re-enable file upload after clearing documents
-                # Reset uploader to accept new files
                 st.experimental_rerun()  # This will cause the app to reload and reset the file uploader
     
         # Display the number of uploaded files
