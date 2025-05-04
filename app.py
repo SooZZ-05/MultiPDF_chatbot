@@ -195,9 +195,21 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
-def auto_play_audio_streamlit(text, lang="en"):
+# def auto_play_audio_streamlit(text, lang="en"):
     
-    tts = gTTS(text, lang=lang)
+#     tts = gTTS(text, lang=lang)
+#     mp3_fp = BytesIO()
+#     tts.write_to_fp(mp3_fp)
+#     mp3_fp.seek(0)
+#     st.audio(mp3_fp, format='audio/mp3')
+
+def auto_play_audio_streamlit(text, lang="en"):
+    # Clean unwanted characters
+    cleaned_text = re.sub(r"[|\#\-\t]", " ", text)
+    cleaned_text = re.sub(r"\s+", " ", cleaned_text).strip()  # Normalize spaces
+
+    # Convert to speech
+    tts = gTTS(cleaned_text, lang=lang)
     mp3_fp = BytesIO()
     tts.write_to_fp(mp3_fp)
     mp3_fp.seek(0)
