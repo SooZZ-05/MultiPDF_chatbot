@@ -87,6 +87,17 @@ def get_conversation_chain(vectorstore):
 def cosine_similarity(vec1, vec2):
     return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
 
+def add_emoji_to_response(text):
+    llm = ChatOpenAI(temperature=0.3)
+    prompt = f"""Suggest a single relevant emoji for this text, 
+    just return the emoji character with no other text or explanation:
+    
+    Text: \"{text}\"\n\n\
+    
+    Emoji: """
+    emoji = llm.invoke(prompt).content.strip()
+    return f"{emoji} {text}" if emoji else text
+
 def handle_userinput(user_question):
     greeting_reply = handle_greeting(user_question)
     if greeting_reply:
@@ -138,6 +149,7 @@ def handle_userinput(user_question):
     if st.session_state.conversation:
         response = st.session_state.conversation({'question': user_question})
         answer = response.get('answer', '').strip()
+        answer = add_emoji_to_response(answer)
         source_docs = response.get('source_documents', [])
 
         grounded = False
