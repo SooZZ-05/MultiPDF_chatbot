@@ -185,7 +185,7 @@ def main():
         st.subheader("Your Documents")
         docs = st.session_state.get("docs", [])
     
-        # Allow file upload only if there are less than 3 documents
+        # Block file upload if there are already 3 documents uploaded
         if len(docs) < 3:
             new_docs = st.file_uploader(
                 "📄 Upload documents (PDF, DOCX, or TXT)",
@@ -202,7 +202,7 @@ def main():
                         # Optionally sanitize file name to remove special characters
                         doc.name = os.path.basename(doc.name)
                         valid_files.append(doc)
-                
+    
                 # Add valid files to the session state, avoiding duplicates
                 for doc in valid_files:
                     if doc not in docs:
@@ -210,7 +210,7 @@ def main():
                 st.session_state.docs = docs
     
         else:
-            # If 3 files are uploaded, disable the uploader and show a "Clear All" button
+            # If 3 files are uploaded, show a warning and provide the "Clear All" button
             st.warning("You have uploaded 3 documents. You cannot upload more.")
             
             clear_button = st.button("Clear All Documents")
@@ -228,31 +228,28 @@ def main():
         st.write(f"You have uploaded {len(docs)} documents.")
     
         # Process documents after the user clicks the 'Process' button
-        if docs:
-            process_button_disabled = len(docs) >= 3
-            process_button = st.button("Process", disabled=process_button_disabled)
+        process_button = st.button("Process")
+        if process_button:
+            # Only process up to 3 files (even if more are uploaded)
+            docs_to_process = docs[:3]
+            st.session_state.docs = docs_to_process  # Update session state to reflect the limit
+            st.write("Processing the documents...")
     
-            if process_button:
-                # Only process up to 3 files
-                docs_to_process = docs[:3]
-                st.session_state.docs = docs_to_process  # Update session state to reflect the limit
-                st.write("Processing the documents...")
+            # Process the documents (e.g., summarize, count words, etc.)
+            with st.spinner("Processing..."):
+                labeled_docs = get_labeled_documents_from_any(docs_to_process)
+                st.session_state.labeled_docs = labeled_docs
+                doc_summaries = summarize_documents(labeled_docs)
+                st.session_state.doc_summaries = doc_summaries
+                st.session_state.word_counts = count_words_in_documents(labeled_docs)
     
-                # Process the documents (e.g., summarize, count words, etc.)
-                with st.spinner("Processing..."):
-                    labeled_docs = get_labeled_documents_from_any(docs_to_process)
-                    st.session_state.labeled_docs = labeled_docs
-                    doc_summaries = summarize_documents(labeled_docs)
-                    st.session_state.doc_summaries = doc_summaries
-                    st.session_state.word_counts = count_words_in_documents(labeled_docs)
+                raw_text = get_document_text(docs_to_process)
+                text_chunks = get_text_chunks(raw_text)
+                vectorstore = get_vectorstore(text_chunks)
+                st.session_state.conversation = get_conversation_chain(vectorstore)
     
-                    raw_text = get_document_text(docs_to_process)
-                    text_chunks = get_text_chunks(raw_text)
-                    vectorstore = get_vectorstore(text_chunks)
-                    st.session_state.conversation = get_conversation_chain(vectorstore)
-    
-                st.success("Documents successfully processed!")
-        else:
+            st.success("Documents successfully processed!")
+        elif len(docs) == 0:
             st.info("No documents uploaded yet.")
 
         st.subheader("Chat Options")
