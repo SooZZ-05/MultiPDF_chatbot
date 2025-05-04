@@ -185,18 +185,22 @@ def main():
         st.subheader("Your Documents")
         docs = st.session_state.get("docs", [])
     
-        # Allow unlimited file upload without restrictions
-        new_docs = st.file_uploader(
-            "📄 Upload documents (PDF, DOCX, or TXT)",
-            type=["pdf", "docx", "txt"],
-            accept_multiple_files=True,
-            key="file_uploader_key"
-        )
+        # Disable file upload when there are 3 documents already
+        if len(docs) < 3:
+            new_docs = st.file_uploader(
+                "📄 Upload documents (PDF, DOCX, or TXT)",
+                type=["pdf", "docx", "txt"],
+                accept_multiple_files=True,
+                key="file_uploader_key"
+            )
     
-        if new_docs:
-            # Combine old and new files
-            docs = docs + [doc for doc in new_docs if doc not in docs]
-            st.session_state.docs = docs
+            if new_docs:
+                # Combine old and new files, avoid duplicates
+                docs = docs + [doc for doc in new_docs if doc not in docs]
+                st.session_state.docs = docs
+    
+        else:
+            st.info("You have already uploaded 3 documents. Upload is disabled.")
     
         if docs:
             process_button = st.button("Process")
