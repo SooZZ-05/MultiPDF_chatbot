@@ -14,7 +14,6 @@ from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question, extract_target_doc_label, get_labeled_documents, is_wordcount_question, count_words_in_documents, save_chat_to_pdf
 
-
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
     os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
@@ -151,10 +150,8 @@ def auto_play_audio(text, lang="en"):
     """
     return audio_html
 
-        
 def display_chat_history():
     chat_history_container = st.container()
-    
     for i, message in enumerate(st.session_state.chat_history):
         if len(message["content"]) > 0:
             with chat_history_container:
@@ -168,7 +165,6 @@ def display_chat_history():
                         # st.audio(audio_fp.read(), format="audio/mp3")
                         audio_html = auto_play_audio(message["content"])
                         st.markdown(audio_html, unsafe_allow_html=True)
-
 
 def main():
     set_openai_api_key()
@@ -206,7 +202,7 @@ def main():
 
             st.success("PDFs successfully processed!")
 
-        
+        st.subheader("Chat Options")
         save_chat_button = st.button("💾 Save Chat to PDF")
         if save_chat_button and st.session_state.chat_history:
             chat_pdf = save_chat_to_pdf(st.session_state.chat_history)
