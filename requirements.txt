@@ -8,3 +8,4 @@ faiss-cpu
 fpdf
 pytz
 gTTS #text audio
+python-docx
