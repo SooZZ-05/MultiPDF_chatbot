@@ -15,6 +15,7 @@ from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question, extract_target_doc_label, get_labeled_documents_from_any, is_wordcount_question, count_words_in_documents, save_chat_to_pdf
+import time
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
@@ -147,7 +148,10 @@ def handle_userinput(user_question):
         return
         
     if st.session_state.conversation:
+        start_time = time.time()
         response = st.session_state.conversation({'question': user_question})
+        end_time = time.time()
+        response_time = round(end_time - start_time, 2)
         answer = response.get('answer', '').strip()
         answer = add_emoji_to_response(answer)
         source_docs = response.get('source_documents', [])
@@ -167,6 +171,7 @@ def handle_userinput(user_question):
 
         if not grounded or answer.lower() in ["i don't know", "i'm not sure"]:
             answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
+        answer += f"\n\n🕒 Response time: {response_time} seconds"
         # if answer and source_docs:
         #     embedder = OpenAIEmbeddings()
         #     answer_embedding = embedder.embed_query(answer)
