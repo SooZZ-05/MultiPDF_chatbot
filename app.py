@@ -169,7 +169,7 @@ def handle_userinput(user_question):
             max_similarity = max(doc_similarities)
             grounded = max_similarity >= 0.7
 
-        if not grounded or answer.lower() in ["i don't know", "i'm not sure"]:
+        if not grounded or answer in ["🤷‍♂️ I don't know.", "i'm not sure"]:
             answer += "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
         answer += f"\n\n🕒 Response time: {response_time} seconds"
         # if answer and source_docs:
