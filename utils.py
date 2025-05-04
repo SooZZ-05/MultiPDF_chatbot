@@ -127,25 +127,6 @@ def estimate_multicell_height(pdf, text, width, line_height):
     lines = pdf.multi_cell(width, line_height, text, split_only=True)
     return len(lines) * line_height + 4 
 
-def parse_table(text):
-    text = re.sub(r"[|#\-]+", "", text)  # Remove unnecessary characters
-    rows = text.strip().split("\n")
-    table = [re.split(r"\t+", row.strip()) for row in rows if row.strip()]
-    return table
-
-def draw_table(pdf, table, col_widths, start_y, line_height):
-    x_start = 10
-    for row in table:
-        pdf.set_xy(x_start, start_y)
-        for i, cell in enumerate(row):
-            cell = cell.strip()
-            width = col_widths[i] if i < len(col_widths) else 50
-            pdf.multi_cell(width, line_height, cell, border=1, align='C', ln=3, max_line_height=line_height)
-            x_start += width
-        start_y = pdf.get_y()
-        x_start = 10
-    return start_y + line_height
-
 def save_chat_to_pdf(chat_history):
     def strip_emojis(text):
         return re.sub(r'[^\x00-\x7F]+', '', text)
@@ -184,62 +165,37 @@ def save_chat_to_pdf(chat_history):
             # Look ahead to the assistant's reply
             assistant_msg = ""
             if i + 1 < len(chat_history) and chat_history[i + 1]["role"] == "assistant":
-                assistant_msg_raw = strip_emojis(chat_history[i + 1]["content"]).strip()
-                assistant_msg = remove_newlines(assistant_msg_raw)
+                assistant_msg = remove_newlines(strip_emojis(chat_history[i + 1]["content"]).strip())
                 i += 1  # Skip assistant entry on next loop
+            label_assistant = f"Assistant:\n{assistant_msg}"
 
-            # Estimate user box height
+            # Estimate box heights
             user_box_height = estimate_multicell_height(pdf, label_user, box_width, line_height)
+            assistant_box_height = estimate_multicell_height(pdf, label_assistant, box_width, line_height)
+            total_pair_height = user_box_height + assistant_box_height + box_spacing
 
-            # Add new page if not enough space for user + assistant
-            y_start = pdf.get_y()
-            if y_start + user_box_height + 2 > usable_height:
+            # Add new page if not enough space
+            if pdf.get_y() + total_pair_height > usable_height:
                 pdf.add_page()
 
-            # Draw user message
+            # Render user message
+            y_start = pdf.get_y()
             pdf.rect(10, y_start, box_width, user_box_height)
             pdf.set_xy(12, y_start + 2)
             pdf.multi_cell(0, line_height, label_user)
             pdf.ln(2)
 
-            # Update Y
+            # Render assistant message
             y_start = pdf.get_y()
-
-            # Check if assistant reply is a table (many | or contains \t)
-            if assistant_msg_raw.count('|') > 3 or '\t' in assistant_msg_raw:
-                # Parse and render table
-                table = parse_table(assistant_msg_raw)
-                col_count = max(len(row) for row in table)
-                col_width = box_width / col_count
-                col_widths = [col_width] * col_count
-
-                # Add page if needed
-                table_height_est = len(table) * (line_height + 1)
-                if y_start + table_height_est > usable_height:
-                    pdf.add_page()
-                    y_start = pdf.get_y()
-
-                pdf.set_text_color(0, 102, 204)
-                y_start = draw_table(pdf, table, col_widths, y_start, line_height)
-                pdf.set_text_color(0, 0, 0)
-                pdf.ln(4)
-            else:
-                # Draw regular assistant message
-                label_assistant = f"Assistant:\n{assistant_msg}"
-                assistant_box_height = estimate_multicell_height(pdf, label_assistant, box_width, line_height)
-
-                if y_start + assistant_box_height > usable_height:
-                    pdf.add_page()
-                    y_start = pdf.get_y()
-
-                pdf.rect(10, y_start, box_width, assistant_box_height)
-                pdf.set_xy(12, y_start + 2)
-                pdf.set_text_color(0, 102, 204)
-                pdf.multi_cell(0, line_height, label_assistant)
-                pdf.set_text_color(0, 0, 0)
-                pdf.ln(4)
+            pdf.rect(10, y_start, box_width, assistant_box_height)
+            pdf.set_xy(12, y_start + 2)
+            pdf.set_text_color(0, 102, 204)
+            pdf.multi_cell(0, line_height, label_assistant)
+            pdf.set_text_color(0, 0, 0)
+            pdf.ln(4)
 
         i += 1
 
+    # Output PDF
     pdf_bytes = pdf.output(dest='S').encode('latin1')
     return BytesIO(pdf_bytes)
