@@ -190,7 +190,7 @@ def main():
             new_docs = st.file_uploader(
                 "📄 Upload documents (PDF, DOCX, or TXT)",
                 type=["pdf", "docx", "txt"],
-                accept_multiple_files=False,
+                accept_multiple_files=True,
                 key="file_uploader_key"
             )
     
@@ -199,33 +199,31 @@ def main():
                 docs = docs + [doc for doc in new_docs if doc not in docs]
                 st.session_state.docs = docs
     
+                # If there are more than 3 files, limit to 3
+                if len(docs) > 3:
+                    docs = docs[:3]  # Keep only the first 3 files
+                    st.session_state.docs = docs  # Update the session state with the limited list
+                    st.warning("You can upload a maximum of 3 unique documents. The extra files have been discarded.")
         else:
             st.info("You have already uploaded 3 documents. Upload is disabled.")
     
         if docs:
             process_button = st.button("Process")
             if process_button:
-                # Check if the number of documents exceeds 3
-                if len(docs) > 3:
-                    st.error("You can upload a maximum of 3 unique documents. Please remove some files.")
-                    # Limit the number of documents to 3
-                    docs = docs[:3]
-                    st.session_state.docs = docs  # Update the session state with only the first 3 documents
-                else:
-                    with st.spinner("Processing..."):
-                        # Process the documents as usual
-                        labeled_docs = get_labeled_documents_from_any(docs)
-                        st.session_state.labeled_docs = labeled_docs
-                        doc_summaries = summarize_documents(labeled_docs)
-                        st.session_state.doc_summaries = doc_summaries
-                        st.session_state.word_counts = count_words_in_documents(labeled_docs)
+                with st.spinner("Processing..."):
+                    # Process the documents as usual
+                    labeled_docs = get_labeled_documents_from_any(docs)
+                    st.session_state.labeled_docs = labeled_docs
+                    doc_summaries = summarize_documents(labeled_docs)
+                    st.session_state.doc_summaries = doc_summaries
+                    st.session_state.word_counts = count_words_in_documents(labeled_docs)
     
-                        raw_text = get_document_text(docs)
-                        text_chunks = get_text_chunks(raw_text)
-                        vectorstore = get_vectorstore(text_chunks)
-                        st.session_state.conversation = get_conversation_chain(vectorstore)
+                    raw_text = get_document_text(docs)
+                    text_chunks = get_text_chunks(raw_text)
+                    vectorstore = get_vectorstore(text_chunks)
+                    st.session_state.conversation = get_conversation_chain(vectorstore)
     
-                    st.success("Documents successfully processed!")
+                st.success("Documents successfully processed!")
         else:
             st.info("No documents uploaded yet.")
 
