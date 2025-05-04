@@ -183,47 +183,41 @@ def main():
     # Sidebar for PDF Upload
     with st.sidebar:
         st.subheader("Your Documents")
+        docs = st.session_state.get("docs", [])
+        if len(docs) < 3:
+            new_docs = st.file_uploader(
+                "📄 Upload up to 3 documents (PDF, DOCX, or TXT)",
+                type=["pdf", "docx", "txt"],
+                accept_multiple_files=True,
+                key="file_uploader_key"
+            )
     
-        docs = st.file_uploader(
-            "📄 Upload up to 3 documents (PDF, DOCX, or TXT)",
-            type=["pdf", "docx", "txt"],
-            accept_multiple_files=True
-        )
-    
-        # If more than 3 files uploaded
-        if docs and len(docs) > 3:
-            # Trim to first 3 files
-            docs = docs[:3]
-            st.error("You can upload a maximum of 3 documents. Extra files were ignored.")
-    
-        # Display uploaded file names
-        if docs:
-            st.write("**Uploaded Documents:**")
-            for i, doc in enumerate(docs):
-                st.write(f"{i+1}. {doc.name}")
-    
-        # Only show process button if there are docs
+            if new_docs:
+                # Combine old and new, keeping max 3
+                docs = docs + [doc for doc in new_docs if doc not in docs]
+                if len(docs) > 3:
+                    st.error("You can upload a maximum of 3 unique documents.")
+                    docs = docs[:3]
+                st.session_state.docs = docs
+        else:
+            st.info("You have uploaded the maximum of 3 documents.")
+
         if docs:
             process_button = st.button("Process")
-    
             if process_button:
                 with st.spinner("Processing..."):
-                    try:
-                        labeled_docs = get_labeled_documents_from_any(docs)
-                        st.session_state.labeled_docs = labeled_docs
-                        doc_summaries = summarize_documents(labeled_docs)
-                        st.session_state.doc_summaries = doc_summaries
-                        st.session_state.word_counts = count_words_in_documents(labeled_docs)
+                    labeled_docs = get_labeled_documents_from_any(docs)
+                    st.session_state.labeled_docs = labeled_docs
+                    doc_summaries = summarize_documents(labeled_docs)
+                    st.session_state.doc_summaries = doc_summaries
+                    st.session_state.word_counts = count_words_in_documents(labeled_docs)
     
-                        raw_text = get_document_text(docs)
-                        text_chunks = get_text_chunks(raw_text)
-                        vectorstore = get_vectorstore(text_chunks)
-                        st.session_state.conversation = get_conversation_chain(vectorstore)
+                    raw_text = get_document_text(docs)
+                    text_chunks = get_text_chunks(raw_text)
+                    vectorstore = get_vectorstore(text_chunks)
+                    st.session_state.conversation = get_conversation_chain(vectorstore)
     
-                        st.success("Documents successfully processed!")
-    
-                    except Exception as e:
-                        st.error(f"An error occurred while processing: {str(e)}")
+                st.success("PDFs successfully processed!")
 
         st.subheader("Chat Options")
         save_chat_button = st.button("💾 Save Chat to PDF")
