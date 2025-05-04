@@ -136,7 +136,11 @@ def handle_userinput(user_question):
 #     mp3_fp.seek(0)
 #     return mp3_fp
 
-def auto_play_audio(text, lang="en", index=0):
+def auto_toggle_audio(text, lang="en", index=0):
+    from gtts import gTTS
+    from io import BytesIO
+    import base64
+
     tts = gTTS(text, lang=lang)
     mp3_fp = BytesIO()
     tts.write_to_fp(mp3_fp)
@@ -148,32 +152,45 @@ def auto_play_audio(text, lang="en", index=0):
         <audio id="audio_{index}" style="display:none">
             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
         </audio>
-        <button onclick="playAudio({index})">🔊</button>
-        <button onclick="stopAudio({index})">❌</button>
+        <button id="btn_{index}" onclick="toggleAudio({index})">🔊</button>
     </div>
 
     <script>
         let currentAudio = null;
+        let currentButton = null;
 
-        function playAudio(index) {{
-            const newAudio = document.getElementById('audio_' + index);
-            if (currentAudio && currentAudio !== newAudio) {{
+        function toggleAudio(index) {{
+            const audio = document.getElementById('audio_' + index);
+            const button = document.getElementById('btn_' + index);
+
+            // If another audio is playing, stop it
+            if (currentAudio && currentAudio !== audio) {{
                 currentAudio.pause();
                 currentAudio.currentTime = 0;
-            }}
-            currentAudio = newAudio;
-            currentAudio.play();
-        }}
-
-        function stopAudio(index) {{
-            const audio = document.getElementById('audio_' + index);
-            if (audio) {{
-                audio.pause();
-                audio.currentTime = 0;
-                if (currentAudio === audio) {{
-                    currentAudio = null;
+                if (currentButton) {{
+                    currentButton.innerText = '🔊';
                 }}
             }}
+
+            if (audio.paused) {{
+                audio.play();
+                button.innerText = '❌';
+                currentAudio = audio;
+                currentButton = button;
+            }} else {{
+                audio.pause();
+                audio.currentTime = 0;
+                button.innerText = '🔊';
+                currentAudio = null;
+                currentButton = null;
+            }}
+
+            // Reset icon when audio ends
+            audio.onended = function () {{
+                button.innerText = '🔊';
+                currentAudio = null;
+                currentButton = null;
+            }};
         }}
     </script>
     """
