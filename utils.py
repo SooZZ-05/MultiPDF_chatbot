@@ -128,44 +128,39 @@ def estimate_multicell_height(pdf, text, width, line_height):
     return len(lines) * line_height + 4 
 
 def extract_table(text):
-   # Remove emojis and control characters
+    # Remove emojis and non-ASCII characters
     text = re.sub(r'[^\x00-\x7F]+', '', text)
     lines = text.splitlines()
 
-    # Step 1: Merge wrapped lines
-    merged_lines = []
-    current_line = ''
+    # Filter and clean lines
+    filtered_lines = []
     for line in lines:
+        line = line.strip()
+        if not line or re.match(r'^\s*\|?\s*-+\s*\|?\s*$', line):  # skip separators
+            continue
         if '|' in line:
-            if current_line:
-                merged_lines.append(current_line)
-            current_line = line.strip()
-        else:
-            current_line += ' ' + line.strip()
-    if current_line:
-        merged_lines.append(current_line)
+            filtered_lines.append(line.strip('|'))
 
-    # Step 2: Remove header separators and filter lines
-    clean_lines = []
-    for line in merged_lines:
-        if re.match(r'^\s*\|?[- ]+\|?[- ]*$', line):
-            continue
-        if not '|' in line:
-            continue
-        clean_lines.append(line.strip('| '))
-
-    # Step 3: Split into cells
+    # Split into rows
     table_data = []
-    for line in clean_lines:
-        row = [cell.strip() for cell in line.split('|')]
-        table_data.append(row)
+    for line in filtered_lines:
+        cells = [cell.strip() for cell in line.split('|')]
+        table_data.append(cells)
 
-    # Step 4: Normalize rows by header length
-    max_len = max(len(row) for row in table_data)
-    table_data = [row + [''] * (max_len - len(row)) for row in table_data if len(row) >= 2]
+    # Normalize all rows to the length of the header
+    if not table_data:
+        return []
 
-    return table_data
+    header_len = len(table_data[0])
+    normalized_data = []
+    for row in table_data:
+        if len(row) == header_len:
+            normalized_data.append(row)
+        elif len(row) < header_len:
+            # Pad short rows with empty strings
+            normalized_data.append(row + [''] * (header_len - len(row)))
 
+    return normalized_data
 
 def draw_table(pdf, table_data, col_width=63, line_height=8):
     # Draw header row with bold font
