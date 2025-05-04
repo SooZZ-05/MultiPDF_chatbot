@@ -109,7 +109,7 @@ def handle_userinput(user_question):
             if matched:
                 summary_response = f"### {matched['label']}\n{matched['summary']}"
             else:
-                summary_response = f"Sorry, I couldn't find a document matching '{target_label}'."
+                summary_response = f"😕Sorry, I couldn't find a document matching '{target_label}'."
         else:
             summary_response = "\n\n".join([f"### {s['label']}\n{s['summary']}" for s in summaries])
 
@@ -157,7 +157,7 @@ def handle_userinput(user_question):
             grounded = max_similarity >= 0.7
         
         if not grounded:
-            answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
+            answer = "😕I'm sorry, but I couldn't find an answer to that question in the documents you provided."
     
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
