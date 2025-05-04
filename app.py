@@ -190,8 +190,26 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
+# def auto_play_audio_streamlit(text, lang="en"):
+    
+#     tts = gTTS(text, lang=lang)
+#     mp3_fp = BytesIO()
+#     tts.write_to_fp(mp3_fp)
+#     mp3_fp.seek(0)
+#     st.audio(mp3_fp, format='audio/mp3')
+
 def auto_play_audio_streamlit(text, lang="en"):
-    tts = gTTS(text, lang=lang)
+    # Clean hyphens/dashes and other problematic symbols
+    clean_text = (
+        text.replace("---", ", ")  # Replace triple hyphens with a pause
+             .replace("--", ", ")  # Replace double hyphens
+             .replace("-", " ")    # Replace single hyphens with space
+             .replace("•", ", ")  # Replace bullet points
+             .strip()             # Remove leading/trailing spaces
+    )
+
+# Generate TTS audio
+    tts = gTTS(clean_text, lang=lang)
     mp3_fp = BytesIO()
     tts.write_to_fp(mp3_fp)
     mp3_fp.seek(0)
