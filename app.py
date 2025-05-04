@@ -173,7 +173,7 @@ def display_chat_history():
                         st.markdown(message["content"])
                 with col2:
                     if st.button("🔊", key=f"play_{i}"):
-                        audio_html = auto_play_audio(message["content"], autoplay=False)
+                        audio_html = auto_play_audio(message["content"])
                         st.markdown(audio_html, unsafe_allow_html=True)
 
 def main():
