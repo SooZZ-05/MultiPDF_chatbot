@@ -196,10 +196,7 @@ def main():
             )
     
             if new_docs:
-                # Filter out invalid files (only PDF, DOCX, TXT allowed)
                 valid_files = [doc for doc in new_docs if doc.type in ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']]
-                
-                # Add valid files to the session state, avoiding duplicates
                 for doc in valid_files:
                     if doc not in docs:
                         docs.append(doc)
@@ -215,16 +212,13 @@ def main():
                 st.session_state.docs = docs
                 st.success("All documents have been cleared. You can upload new documents now.")
     
-                # Re-enable file upload after clearing documents
-                # Reset uploader to accept new files
-                st.experimental_rerun()  # This will cause the app to reload and reset the file uploader
-    
-        # Display the number of uploaded files
+                st.experimental_rerun()
+   
         st.write(f"You have uploaded {len(docs)} documents.")
     
         # Block the process button if there are more than 3 files
-        if len(docs) >= 3:
-            process_button_disabled = False
+        if len(docs) > 3:
+            process_button_disabled = True
         else:
             process_button_disabled = False
     
