@@ -167,7 +167,7 @@ def save_chat_to_pdf(chat_history):
             if i + 1 < len(chat_history) and chat_history[i + 1]["role"] == "assistant":
                 assistant_msg = remove_newlines(strip_emojis(chat_history[i + 1]["content"]).strip())
                 i += 1  # Skip assistant entry on next loop
-            assistant_msg = re.sub(r"[|\#\-\t]", " ", text)
+            assistant_msg = re.sub(r"[|\#\-\t]", " ", assistant_msg)
             assistant_msg = re.sub(r"\s+", " ", cleaned_text).strip()  # Normalize spaces
             label_assistant = f"Assistant:\n{assistant_msg}"
 
