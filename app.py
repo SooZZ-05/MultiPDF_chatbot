@@ -190,7 +190,7 @@ def main():
             new_docs = st.file_uploader(
                 "📄 Upload documents (PDF, DOCX, or TXT)",
                 type=["pdf", "docx", "txt"],
-                accept_multiple_files=True,
+                accept_multiple_files=False,
                 key="file_uploader_key"
             )
     
