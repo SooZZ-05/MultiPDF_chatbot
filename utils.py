@@ -4,6 +4,7 @@ import re
 import pytz
 from langchain.chat_models import ChatOpenAI
 from PyPDF2 import PdfReader
+from docx import Document
 from fpdf import FPDF
 from datetime import datetime
 from io import BytesIO
@@ -41,18 +42,33 @@ def handle_farewell(user_input: str):
         return random.choice(FAREWELL_REPLIES)
     return None
 
-def get_labeled_documents(pdf_docs):
+def get_labeled_documents_from_any(uploaded_docs):
     labeled_docs = []
-    for i, pdf in enumerate(pdf_docs):
-        pdf_reader = PdfReader(pdf)
+    for i, doc in enumerate(uploaded_docs):
+        name = doc.name.lower()
         text = ""
-        for page in pdf_reader.pages:
-            content = page.extract_text()
-            if content:
-                text += content
-        doc_name = pdf.name
-        label = f"Document {i+1}: {doc_name}"
+
+        if name.endswith(".pdf"):
+            pdf_reader = PdfReader(doc)
+            for page in pdf_reader.pages:
+                content = page.extract_text()
+                if content:
+                    text += content
+
+        elif name.endswith(".docx"):
+            word_doc = Document(doc)
+            for para in word_doc.paragraphs:
+                text += para.text + "\n"
+
+        elif name.endswith(".txt"):
+            text += doc.read().decode("utf-8") + "\n"
+
+        else:
+            continue
+
+        label = f"Document {i+1}: {doc.name}"
         labeled_docs.append({"label": label, "text": text})
+    
     return labeled_docs
 
 def summarize_documents(labeled_docs):
