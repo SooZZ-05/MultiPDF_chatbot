@@ -187,29 +187,29 @@ def main():
         if "uploaded_docs" not in st.session_state:
             st.session_state.uploaded_docs = []
     
-        # Upload one file at a time
-        new_file = st.file_uploader(
-            "📄 Upload one document (PDF, DOCX, or TXT)",
-            type=["pdf", "docx", "txt"],
-            key="uploader"
-        )
+        # Only show uploader if less than 3 docs
+        if len(st.session_state.uploaded_docs) < 3:
+            new_file = st.file_uploader(
+                "📄 Upload one document (PDF, DOCX, or TXT)",
+                type=["pdf", "docx", "txt"],
+                key="uploader"
+            )
     
-        # If file uploaded, append to session state
-        if new_file is not None:
-            if len(st.session_state.uploaded_docs) >= 3:
-                st.warning("Maximum of 3 documents allowed.")
-            else:
+            if new_file is not None:
                 # Prevent duplicates
                 if new_file.name not in [f.name for f in st.session_state.uploaded_docs]:
                     st.session_state.uploaded_docs.append(new_file)
                 else:
                     st.info("This file is already uploaded.")
+        else:
+            st.info("You have uploaded the maximum of 3 documents.")
     
-        # Show current uploaded files
+        # Show uploaded files
         if st.session_state.uploaded_docs:
             st.write("**Uploaded Documents:**")
             for i, doc in enumerate(st.session_state.uploaded_docs):
                 st.write(f"{i+1}. {doc.name}")
+    
             if st.button("Clear Uploads"):
                 st.session_state.uploaded_docs = []
     
@@ -223,12 +223,10 @@ def main():
                     doc_summaries = summarize_documents(labeled_docs)
                     st.session_state.doc_summaries = doc_summaries
                     st.session_state.word_counts = count_words_in_documents(labeled_docs)
-    
                     raw_text = get_document_text(docs)
                     text_chunks = get_text_chunks(raw_text)
                     vectorstore = get_vectorstore(text_chunks)
                     st.session_state.conversation = get_conversation_chain(vectorstore)
-    
                     st.success("Documents successfully processed!")
                 except Exception as e:
                     st.error(f"An error occurred: {str(e)}")
