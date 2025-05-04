@@ -130,87 +130,31 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
-# def auto_play_audio(text, lang="en", key="audio"):
-#     # Generate audio
-#     tts = gTTS(text, lang=lang)
-#     mp3_fp = BytesIO()
-#     tts.write_to_fp(mp3_fp)
-#     mp3_fp.seek(0)
-#     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
-
-#     # HTML with play/pause button and seekbar
-#     html_code = f"""
-#     <html>
-#     <body>
-#         <div style="display: flex; align-items: center; gap: 10px;">
-#             <button id="btn_{key}" onclick="toggleAudio_{key}()">▶️</button>
-#             <input type="range" id="seek_{key}" value="0" min="0" step="1" style="width: 100%;">
-#         </div>
-#         <audio id="{key}" src="data:audio/mp3;base64,{audio_base64}"></audio>
-
-#         <script>
-#             var audio_{key} = document.getElementById("{key}");
-#             var button_{key} = document.getElementById("btn_{key}");
-#             var seek_{key} = document.getElementById("seek_{key}");
-
-#             function toggleAudio_{key}() {{
-#                 if (audio_{key}.paused) {{
-#                     audio_{key}.play();
-#                     button_{key}.innerHTML = "⏸️";
-#                 }} else {{
-#                     audio_{key}.pause();
-#                     button_{key}.innerHTML = "▶️";
-#                 }}
-#             }}
-
-#             audio_{key}.addEventListener("timeupdate", function() {{
-#                 seek_{key}.value = Math.floor(audio_{key}.currentTime);
-#                 seek_{key}.max = Math.floor(audio_{key}.duration);
-#             }});
-
-#             seek_{key}.addEventListener("input", function() {{
-#                 audio_{key}.currentTime = seek_{key}.value;
-#             }});
-
-#             audio_{key}.addEventListener("ended", function() {{
-#                 button_{key}.innerHTML = "▶️";
-#                 seek_{key}.value = 0;
-#             }});
-#         </script>
-#     </body>
-#     </html>
-#     """
-
-#     components.html(html_code, height=100)
-
 def auto_play_audio_streamlit(text, lang="en"):
-    # Generate audio
     tts = gTTS(text, lang=lang)
     mp3_fp = BytesIO()
     tts.write_to_fp(mp3_fp)
     mp3_fp.seek(0)
-
-    # Use built-in Streamlit audio player
     st.audio(mp3_fp, format='audio/mp3')
-
-# def display_chat_history():
-#     chat_history_container = st.container()
-#     for i, message in enumerate(st.session_state.chat_history):
-#         if len(message["content"]) > 0:
-#             with chat_history_container:
-#                 with st.chat_message(message["role"]):
-#                     st.markdown(message["content"])
-#                     auto_play_audio(message["content"], key=f"audio_{i}")  # Moved inside chat_message block
 
 def display_chat_history():
     chat_history_container = st.container()
     for i, message in enumerate(st.session_state.chat_history):
-        if len(message["content"]) > 0:
-            with chat_history_container:
+        key = f"show_audio_{i}"
+        if key not in st.session_state:
+            st.session_state[key] = False  # initialize hidden
+
+        with chat_history_container:
+            col1, col2 = st.columns([10, 1])
+            with col1:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
-                    auto_play_audio_streamlit(message["content"])
-
+                    if st.session_state[key]:
+                        auto_play_audio_streamlit(message["content"])
+            with col2:
+                toggle_text = "Hide" if st.session_state[key] else "Play"
+                if st.button(toggle_text, key=f"toggle_btn_{i}"):
+                    st.session_state[key] = not st.session_state[key]
 
 def main():
     set_openai_api_key()
