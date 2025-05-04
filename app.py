@@ -184,52 +184,46 @@ def main():
     with st.sidebar:
         st.subheader("Your Documents")
     
-        if "uploaded_docs" not in st.session_state:
-            st.session_state.uploaded_docs = []
+        docs = st.file_uploader(
+            "📄 Upload up to 3 documents (PDF, DOCX, or TXT)",
+            type=["pdf", "docx", "txt"],
+            accept_multiple_files=True
+        )
     
-        # Only show uploader if less than 3 docs
-        if len(st.session_state.uploaded_docs) < 3:
-            new_file = st.file_uploader(
-                "📄 Upload one document (PDF, DOCX, or TXT)",
-                type=["pdf", "docx", "txt"],
-                key="uploader"
-            )
+        # If more than 3 files uploaded
+        if docs and len(docs) > 3:
+            # Trim to first 3 files
+            docs = docs[:3]
+            st.error("You can upload a maximum of 3 documents. Extra files were ignored.")
     
-            if new_file is not None:
-                # Prevent duplicates
-                if new_file.name not in [f.name for f in st.session_state.uploaded_docs]:
-                    st.session_state.uploaded_docs.append(new_file)
-                else:
-                    st.info("This file is already uploaded.")
-        else:
-            st.info("You have uploaded the maximum of 3 documents.")
-    
-        # Show uploaded files
-        if st.session_state.uploaded_docs:
+        # Display uploaded file names
+        if docs:
             st.write("**Uploaded Documents:**")
-            for i, doc in enumerate(st.session_state.uploaded_docs):
+            for i, doc in enumerate(docs):
                 st.write(f"{i+1}. {doc.name}")
     
-            if st.button("Clear Uploads"):
-                st.session_state.uploaded_docs = []
+        # Only show process button if there are docs
+        if docs:
+            process_button = st.button("Process")
     
-        # Process button
-        if st.session_state.uploaded_docs and st.button("Process"):
-            with st.spinner("Processing..."):
-                try:
-                    docs = st.session_state.uploaded_docs
-                    labeled_docs = get_labeled_documents_from_any(docs)
-                    st.session_state.labeled_docs = labeled_docs
-                    doc_summaries = summarize_documents(labeled_docs)
-                    st.session_state.doc_summaries = doc_summaries
-                    st.session_state.word_counts = count_words_in_documents(labeled_docs)
-                    raw_text = get_document_text(docs)
-                    text_chunks = get_text_chunks(raw_text)
-                    vectorstore = get_vectorstore(text_chunks)
-                    st.session_state.conversation = get_conversation_chain(vectorstore)
-                    st.success("Documents successfully processed!")
-                except Exception as e:
-                    st.error(f"An error occurred: {str(e)}")
+            if process_button:
+                with st.spinner("Processing..."):
+                    try:
+                        labeled_docs = get_labeled_documents_from_any(docs)
+                        st.session_state.labeled_docs = labeled_docs
+                        doc_summaries = summarize_documents(labeled_docs)
+                        st.session_state.doc_summaries = doc_summaries
+                        st.session_state.word_counts = count_words_in_documents(labeled_docs)
+    
+                        raw_text = get_document_text(docs)
+                        text_chunks = get_text_chunks(raw_text)
+                        vectorstore = get_vectorstore(text_chunks)
+                        st.session_state.conversation = get_conversation_chain(vectorstore)
+    
+                        st.success("Documents successfully processed!")
+    
+                    except Exception as e:
+                        st.error(f"An error occurred while processing: {str(e)}")
 
         st.subheader("Chat Options")
         save_chat_button = st.button("💾 Save Chat to PDF")
