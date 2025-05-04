@@ -152,7 +152,7 @@ def display_chat_history():
     for i, message in enumerate(st.session_state.chat_history):
         key = f"show_audio_{i}"
         if key not in st.session_state:
-            st.session_state[key] = False  # initialize hidden
+            st.session_state[key] = False
 
         with chat_history_container:
             col1, col2 = st.columns([10, 1])
@@ -162,7 +162,7 @@ def display_chat_history():
                     if st.session_state[key]:
                         auto_play_audio_streamlit(message["content"])
             with col2:
-                toggle_text = "Hide" if st.session_state[key] else "Play"
+                toggle_text = "❌" if st.session_state[key] else "📢"
                 if st.button(toggle_text, key=f"toggle_btn_{i}"):
                     st.session_state[key] = not st.session_state[key]
 
