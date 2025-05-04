@@ -298,16 +298,35 @@ def main():
                 st.success("PDFs successfully processed!")
 
         st.subheader("Chat Options")
-        save_chat_button = st.button("💾 Save Chat to PDF")
+        save_option = st.radio(
+            "Choose how to handle chat history:",
+            ("🖨️ Print with Chat History (Browser Print)", "💾 Print Raw Text to PDF")
+        )
+
+        save_chat_button = st.button("Proceed")
         if save_chat_button and st.session_state.chat_history:
-            chat_pdf = save_chat_to_pdf(st.session_state.chat_history)
-            st.download_button(
-                label="📥 Download Chat History PDF",
-                data=chat_pdf,
-                file_name="chat_history.pdf",
-                mime="application/pdf"
-            )
-            st.success("Chat history saved as PDF!")
+            if save_option == "💾 Print Raw Text to PDF":
+                chat_pdf = save_chat_to_pdf(st.session_state.chat_history)
+                st.download_button(
+                    label="📥 Download Chat History PDF",
+                    data=chat_pdf,
+                    file_name="chat_history.pdf",
+                    mime="application/pdf"
+                )
+                st.success("Chat history saved as PDF!")
+        
+            elif save_option == "🖨️ Print with Chat History (Browser Print)":
+                # JavaScript to open print dialog
+                components.html(
+                    """
+                    <script>
+                        window.print();
+                    </script>
+                    """,
+                    height=0,
+                    width=0
+                )
+                st.info("Browser print dialog opened. Use it to print or save as PDF.")
 
     # Disable user input until the PDFs are uploaded and processed
     if st.session_state.conversation:
