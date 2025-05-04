@@ -206,7 +206,7 @@ def display_chat_history():
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])
                 with col2:
-                    audio_html = auto_play_audio(message["content"], index=i)
+                    audio_html = auto_toggle_audio(message["content"], index=i)
                     st.markdown(audio_html, unsafe_allow_html=True)
 
                     # if st.button("🔊", key=f"play_{i}"):
