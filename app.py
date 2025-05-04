@@ -184,32 +184,41 @@ def main():
     with st.sidebar:
         st.subheader("Your Documents")
         docs = st.session_state.get("docs", [])
+        
+        # Check if there are exactly 3 files, disable file uploader and show clear option
+        if len(docs) < 3:
+            # Allow file upload if less than 3 documents are uploaded
+            new_docs = st.file_uploader(
+                "📄 Upload documents (PDF, DOCX, or TXT)",
+                type=["pdf", "docx", "txt"],
+                accept_multiple_files=True,
+                key="file_uploader_key"
+            )
     
-        # Allow file upload even if there are already 3 documents uploaded
-        new_docs = st.file_uploader(
-            "📄 Upload documents (PDF, DOCX, or TXT)",
-            type=["pdf", "docx", "txt"],
-            accept_multiple_files=True,
-            key="file_uploader_key"
-        )
-    
-        if new_docs:
-            # Filter out invalid files (only PDF, DOCX, TXT allowed)
-            valid_files = [doc for doc in new_docs if doc.type in ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']]
-    
-            # Add valid files to the session state, avoiding duplicates
-            for doc in valid_files:
-                if doc not in docs:
-                    docs.append(doc)
-            st.session_state.docs = docs
+            if new_docs:
+                # Filter out invalid files (only PDF, DOCX, TXT allowed)
+                valid_files = [doc for doc in new_docs if doc.type in ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']]
+                
+                # Add valid files to the session state, avoiding duplicates
+                for doc in valid_files:
+                    if doc not in docs:
+                        docs.append(doc)
+                st.session_state.docs = docs
+        else:
+            # If 3 files are uploaded, disable the uploader and show a "Clear All" button
+            st.warning("You have uploaded 3 documents. You cannot upload more.")
+            clear_button = st.button("Clear All Documents")
+            if clear_button:
+                docs.clear()  # Clear all files
+                st.session_state.docs = docs
+                st.success("All documents have been cleared. You can upload new documents now.")
     
         # Display the number of uploaded files
         st.write(f"You have uploaded {len(docs)} documents.")
     
         # Block the process button if there are more than 3 files
-        if len(docs) >3:
-            st.warning("You have uploaded 3 documents. You cannot process more than 3 files.")
-            process_button_disabled = True
+        if len(docs) >= 3:
+            process_button_disabled = False
         else:
             process_button_disabled = False
     
