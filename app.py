@@ -130,13 +130,6 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
-# def text_to_speech_base64(text, lang="en"):
-#     tts = gTTS(text, lang=lang)
-#     mp3_fp = BytesIO()
-#     tts.write_to_fp(mp3_fp)
-#     mp3_fp.seek(0)
-#     return mp3_fp
-
 def auto_play_audio(text, lang="en", key="audio"):
     tts = gTTS(text, lang=lang)
     mp3_fp = BytesIO()
@@ -145,16 +138,13 @@ def auto_play_audio(text, lang="en", key="audio"):
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
     html_code = f"""
-    <html>
-    <body>
-        <audio id="{key}" controls style="width: 100%;">
-            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-            Your browser does not support the audio element.
-        </audio>
-    </body>
-    </html>
+    <audio id="{key}" controls style="width: 100%; max-width: 100%;">
+        <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
     """
-    components.html(html_code, height=80)
+    
+    components.html(html_code, height=50, scrolling=False)
 
 def display_chat_history():
     chat_history_container = st.container()
