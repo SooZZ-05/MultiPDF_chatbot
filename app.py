@@ -130,12 +130,12 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
-def text_to_speech_base64(text, lang="en"):
-    tts = gTTS(text, lang=lang)
-    mp3_fp = BytesIO()
-    tts.write_to_fp(mp3_fp)
-    mp3_fp.seek(0)
-    return mp3_fp
+# def text_to_speech_base64(text, lang="en"):
+#     tts = gTTS(text, lang=lang)
+#     mp3_fp = BytesIO()
+#     tts.write_to_fp(mp3_fp)
+#     mp3_fp.seek(0)
+#     return mp3_fp
 
 def auto_play_audio(text, lang="en", key="audio"):
     tts = gTTS(text, lang=lang)
@@ -147,23 +147,30 @@ def auto_play_audio(text, lang="en", key="audio"):
     html_code = f"""
     <html>
     <body>
-        <button onclick="toggleAudio_{key}()">🔊 Play/Pause</button>
+        <button id="btn_{key}" onclick="toggleAudio_{key}()">▶️</button>
         <audio id="{key}" src="data:audio/mp3;base64,{audio_base64}"></audio>
         <script>
+        var audio_{key} = document.getElementById("{key}");
+        var button_{key} = document.getElementById("btn_{key}");
+
         function toggleAudio_{key}() {{
-            var audio = document.getElementById("{key}");
-            if (audio.paused) {{
-                audio.play();
+            if (audio_{key}.paused) {{
+                audio_{key}.play();
+                button_{key}.innerHTML = "⏸️";
             }} else {{
-                audio.pause();
+                audio_{key}.pause();
+                button_{key}.innerHTML = "▶️";
             }}
         }}
+
+        audio_{key}.onended = function() {{
+            button_{key}.innerHTML = "▶️";
+        }};
         </script>
     </body>
     </html>
     """
     components.html(html_code, height=70)
-
 
 def display_chat_history():
     chat_history_container = st.container()
