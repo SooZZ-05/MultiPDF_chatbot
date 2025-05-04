@@ -158,6 +158,8 @@ def handle_userinput(user_question):
         
         if not grounded:
             answer = "😕I'm sorry, but I couldn't find an answer to that question in the documents you provided."
+        else:
+            answer = f"📚 {answer}"
     
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
