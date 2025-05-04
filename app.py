@@ -129,72 +129,42 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
-def generate_audio_html(text, index, lang="en"):
+def text_to_speech_base64(text, lang="en"):
+    tts = gTTS(text, lang=lang)
+    mp3_fp = BytesIO()
+    tts.write_to_fp(mp3_fp)
+    mp3_fp.seek(0)
+    return mp3_fp
+
+def auto_play_audio(text, lang="en"):
     tts = gTTS(text, lang=lang)
     mp3_fp = BytesIO()
     tts.write_to_fp(mp3_fp)
     mp3_fp.seek(0)
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
-    audio_id = f"audio_{index}"
-    button_id = f"button_{index}"
-
     audio_html = f"""
-        <audio id="{audio_id}" src="data:audio/mp3;base64,{audio_base64}"></audio>
-        <button id="{button_id}" onclick="toggleAudio('{audio_id}', '{button_id}')">🔊</button>
+        <audio autoplay="true" style="display:none">
+            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+        </audio>
     """
     return audio_html
 
-def get_audio_control_script():
-    return """
-    <script>
-    var currentAudio = null;
-    var currentButton = null;
-
-    function toggleAudio(audioId, buttonId) {
-        var audio = document.getElementById(audioId);
-        var button = document.getElementById(buttonId);
-
-        if (currentAudio && currentAudio !== audio) {
-            currentAudio.pause();
-            currentAudio.currentTime = 0;
-            if (currentButton) {
-                currentButton.innerText = '🔊';
-            }
-        }
-
-        if (audio.paused) {
-            audio.play();
-            button.innerText = '❌';
-            currentAudio = audio;
-            currentButton = button;
-        } else {
-            audio.pause();
-            button.innerText = '🔊';
-            currentAudio = null;
-            currentButton = null;
-        }
-    }
-    </script>
-    """
-
 def display_chat_history():
     chat_history_container = st.container()
-    with chat_history_container:
-        for i, message in enumerate(st.session_state.chat_history):
-            if message["content"]:
+    for i, message in enumerate(st.session_state.chat_history):
+        if len(message["content"]) > 0:
+            with chat_history_container:
                 col1, col2 = st.columns([10, 1])
                 with col1:
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])
                 with col2:
-                    tts = gTTS(message["content"])
-                    mp3_fp = BytesIO()
-                    tts.write_to_fp(mp3_fp)
-                    mp3_fp.seek(0)
-                    st.audio(mp3_fp, format="audio/mp3")
-        
-        st.markdown(get_audio_control_script(), unsafe_allow_html=True)
+                    if st.button("🔊", key=f"play_{i}"):
+                        # audio_fp = text_to_speech_base64(message["content"])
+                        # st.audio(audio_fp.read(), format="audio/mp3")
+                        audio_html = auto_play_audio(message["content"])
+                        st.markdown(audio_html, unsafe_allow_html=True)
 
 def main():
     set_openai_api_key()
