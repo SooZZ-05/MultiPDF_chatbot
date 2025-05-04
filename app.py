@@ -21,9 +21,12 @@ def set_openai_api_key():
     os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 def get_document_text(docs):
-    text = ""
-    for doc in docs:
+    labeled_docs = []
+    
+    for i, doc in enumerate(docs):
         name = doc.name.lower()
+        text = ""
+
         if name.endswith(".pdf"):
             pdf_reader = PdfReader(doc)
             for page in pdf_reader.pages:
@@ -35,15 +38,34 @@ def get_document_text(docs):
             for para in word_doc.paragraphs:
                 text += para.text + "\n"
         elif name.endswith(".txt"):
-            stringio = BytesIO(doc.read())
-            text += stringio.read().decode("utf-8") + "\n"
-    return text
+            text += doc.read().decode("utf-8") + "\n"
 
-def get_text_chunks(text):
+        # Add label for each document
+        label = f"Document {i+1}: {doc.name}"
+        labeled_docs.append({"label": label, "text": text})
+    
+    return labeled_docs
+
+def get_text_chunks(docs):
     text_splitter = CharacterTextSplitter(
         separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
     )
-    return text_splitter.split_text(text)
+    
+    labeled_chunks = []
+    
+    for idx, doc in enumerate(docs):
+        label = doc['label']  # Extract document label
+        text = doc['text']  # Extract the text from the document
+        
+        # Split the text into chunks
+        chunks = text_splitter.split_text(text)
+        
+        # Add label to each chunk
+        for i, chunk in enumerate(chunks):
+            labeled_chunk = f"{label} - Chunk {i+1}: {chunk}"
+            labeled_chunks.append(labeled_chunk)
+    
+    return labeled_chunks
 
 def get_vectorstore(text_chunks):
     embeddings = OpenAIEmbeddings()
