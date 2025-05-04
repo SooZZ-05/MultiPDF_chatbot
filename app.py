@@ -188,12 +188,9 @@ def display_chat_history():
     for i, message in enumerate(st.session_state.chat_history):
         if len(message["content"]) > 0:
             with chat_history_container:
-                col1, col2 = st.columns([10, 1])
-                with col1:
-                    with st.chat_message(message["role"]):
-                        st.markdown(message["content"])
-                with col2:
-                    auto_play_audio(message["content"], key=f"audio_{i}")
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+                    auto_play_audio(message["content"], key=f"audio_{i}")  # Moved inside chat_message block
 
 def main():
     set_openai_api_key()
