@@ -156,22 +156,36 @@ def handle_userinput(user_question):
         if answer and source_docs:
             embedder = OpenAIEmbeddings()
             answer_embedding = embedder.embed_query(answer)
-        
             doc_texts = [doc.page_content for doc in source_docs]
             chunk_embeddings = embedder.embed_documents(doc_texts)
-
             doc_similarities = [
                 cosine_similarity(answer_embedding, chunk_embedding)
                 for chunk_embedding in chunk_embeddings
             ]
-
             max_similarity = max(doc_similarities)
             grounded = max_similarity >= 0.7
+
+        if not grounded or answer.lower() in ["i don't know", "i'm not sure"]:
+            answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
+        # if answer and source_docs:
+        #     embedder = OpenAIEmbeddings()
+        #     answer_embedding = embedder.embed_query(answer)
         
-        if not grounded:
-            answer = "😕I'm sorry, but I couldn't find an answer to that question in the documents you provided."
-        else:
-            answer = f"📚 {answer}"
+        #     doc_texts = [doc.page_content for doc in source_docs]
+        #     chunk_embeddings = embedder.embed_documents(doc_texts)
+
+        #     doc_similarities = [
+        #         cosine_similarity(answer_embedding, chunk_embedding)
+        #         for chunk_embedding in chunk_embeddings
+        #     ]
+
+        #     max_similarity = max(doc_similarities)
+        #     grounded = max_similarity >= 0.7
+        
+        # if not grounded:
+        #     answer = "😕I'm sorry, but I couldn't find an answer to that question in the documents you provided."
+        # else:
+        #     answer = f"📚 {answer}"
     
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
