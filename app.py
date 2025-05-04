@@ -39,15 +39,39 @@ def get_document_text(docs):
             text += stringio.read().decode("utf-8") + "\n"
     return text
 
-def get_text_chunks(text):
+def get_labeled_chunks(docs):
     text_splitter = CharacterTextSplitter(
         separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
     )
-    return text_splitter.split_text(text)
 
-def get_vectorstore(text_chunks):
+    all_chunks = []
+    for doc in docs:
+        label = doc.name  # Use file name as document label
+        if label.endswith(".pdf"):
+            reader = PdfReader(doc)
+            text = "\n".join([p.extract_text() or "" for p in reader.pages])
+        elif label.endswith(".docx"):
+            document = Document(doc)
+            text = "\n".join([p.text for p in document.paragraphs])
+        elif label.endswith(".txt"):
+            stringio = BytesIO(doc.read())
+            text = stringio.read().decode("utf-8")
+        else:
+            continue
+
+        chunks = text_splitter.split_text(text)
+        for i, chunk in enumerate(chunks):
+            all_chunks.append({
+                "content": chunk,
+                "metadata": {"source": label, "chunk_id": i}
+            })
+    return all_chunks
+
+def get_vectorstore(labeled_chunks):
     embeddings = OpenAIEmbeddings()
-    return FAISS.from_texts(texts=text_chunks, embedding=embeddings)
+    texts = [chunk["content"] for chunk in labeled_chunks]
+    metadatas = [chunk["metadata"] for chunk in labeled_chunks]
+    return FAISS.from_texts(texts=texts, embedding=embeddings, metadatas=metadatas)
 
 def get_conversation_chain(vectorstore):
     llm = ChatOpenAI(
@@ -117,6 +141,12 @@ def handle_userinput(user_question):
         response = st.session_state.conversation({'question': user_question})
         answer = response.get('answer', '').strip()
         source_docs = response.get('source_documents', [])
+        if source_docs:
+            sources = "\n\n".join(
+                f"📄 From `{doc.metadata.get('source')}` (chunk {doc.metadata.get('chunk_id')})"
+                for doc in source_docs
+            )
+            answer += f"\n\n---\n{sources}"
 
         grounded = False
         if answer and source_docs:
@@ -220,9 +250,8 @@ def main():
                 st.session_state.doc_summaries = doc_summaries
                 st.session_state.word_counts = count_words_in_documents(labeled_docs)
     
-                raw_text = get_document_text(st.session_state['uploaded_docs'])
-                text_chunks = get_text_chunks(raw_text)
-                vectorstore = get_vectorstore(text_chunks)
+                labeled_chunks = get_labeled_chunks(st.session_state['uploaded_docs'])
+                vectorstore = get_vectorstore(labeled_chunks)
                 st.session_state.conversation = get_conversation_chain(vectorstore)
     
                 st.success("PDFs successfully processed!")
