@@ -127,13 +127,30 @@ def estimate_multicell_height(pdf, text, width, line_height):
     lines = pdf.multi_cell(width, line_height, text, split_only=True)
     return len(lines) * line_height + 4 
 
+def strip_emojis(text):
+    return re.sub(r'[^\x00-\x7F]+', '', text)
+
+def remove_newlines(text):
+    return re.sub(r'\s*\n\s*', ' ', text.strip())
+
+def render_table_to_pdf(pdf, table_text, x_start=10, y_start=pdf.get_y(), box_width=190, line_height=8):
+    rows = table_text.strip().split("\n")
+    header = rows[0].split("|")
+    data_rows = [row.split("|") for row in rows[1:]]
+
+    pdf.set_font("Arial", 'B', 10)
+    for i, column in enumerate(header):
+        pdf.cell(box_width / len(header), line_height, column.strip(), border=1, align="C")
+    pdf.ln(line_height)
+
+    pdf.set_font("Arial", '', 10)
+    for row in data_rows:
+        for i, cell in enumerate(row):
+            pdf.cell(box_width / len(header), line_height, cell.strip(), border=1, align="C")
+        pdf.ln(line_height)
+
 def save_chat_to_pdf(chat_history):
-    def strip_emojis(text):
-        return re.sub(r'[^\x00-\x7F]+', '', text)
-
-    def remove_newlines(text):
-        return re.sub(r'\s*\n\s*', ' ', text.strip())
-
+    
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=False)
@@ -169,30 +186,35 @@ def save_chat_to_pdf(chat_history):
                 i += 1  # Skip assistant entry on next loop
             label_assistant = f"Assistant:\n{assistant_msg}"
 
-            # Estimate box heights
-            user_box_height = estimate_multicell_height(pdf, label_user, box_width, line_height)
-            assistant_box_height = estimate_multicell_height(pdf, label_assistant, box_width, line_height)
-            total_pair_height = user_box_height + assistant_box_height + box_spacing
-
-            # Add new page if not enough space
-            if pdf.get_y() + total_pair_height > usable_height:
-                pdf.add_page()
-
-            # Render user message
-            y_start = pdf.get_y()
-            pdf.rect(10, y_start, box_width, user_box_height)
-            pdf.set_xy(12, y_start + 2)
-            pdf.multi_cell(0, line_height, label_user)
-            pdf.ln(2)
-
-            # Render assistant message
-            y_start = pdf.get_y()
-            pdf.rect(10, y_start, box_width, assistant_box_height)
-            pdf.set_xy(12, y_start + 2)
-            pdf.set_text_color(0, 102, 204)
-            pdf.multi_cell(0, line_height, label_assistant)
-            pdf.set_text_color(0, 0, 0)
-            pdf.ln(4)
+            if "|" in assistant_msg:  # Simple check for table structure
+                # Render the table in the PDF
+                render_table_to_pdf(pdf, assistant_msg)
+                pdf.ln(4)  # Space after table
+            else:
+                # Estimate box heights
+                user_box_height = estimate_multicell_height(pdf, label_user, box_width, line_height)
+                assistant_box_height = estimate_multicell_height(pdf, label_assistant, box_width, line_height)
+                total_pair_height = user_box_height + assistant_box_height + box_spacing
+    
+                # Add new page if not enough space
+                if pdf.get_y() + total_pair_height > usable_height:
+                    pdf.add_page()
+    
+                # Render user message
+                y_start = pdf.get_y()
+                pdf.rect(10, y_start, box_width, user_box_height)
+                pdf.set_xy(12, y_start + 2)
+                pdf.multi_cell(0, line_height, label_user)
+                pdf.ln(2)
+    
+                # Render assistant message
+                y_start = pdf.get_y()
+                pdf.rect(10, y_start, box_width, assistant_box_height)
+                pdf.set_xy(12, y_start + 2)
+                pdf.set_text_color(0, 102, 204)
+                pdf.multi_cell(0, line_height, label_assistant)
+                pdf.set_text_color(0, 0, 0)
+                pdf.ln(4)
 
         i += 1
 
