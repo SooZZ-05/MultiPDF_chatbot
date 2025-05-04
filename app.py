@@ -185,9 +185,8 @@ def main():
         st.subheader("Your Documents")
         docs = st.session_state.get("docs", [])
     
-        # Check if there are exactly 3 files, disable file uploader and show clear option
+        # Allow file upload only if there are less than 3 documents
         if len(docs) < 3:
-            # Allow file upload if less than 3 documents are uploaded
             new_docs = st.file_uploader(
                 "📄 Upload documents (PDF, DOCX, or TXT)",
                 type=["pdf", "docx", "txt"],
@@ -196,11 +195,20 @@ def main():
             )
     
             if new_docs:
-                valid_files = [doc for doc in new_docs if doc.type in ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']]
+                # Filter out invalid files (only PDF, DOCX, TXT allowed)
+                valid_files = []
+                for doc in new_docs:
+                    if doc.type in ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']:
+                        # Optionally sanitize file name to remove special characters
+                        doc.name = os.path.basename(doc.name)
+                        valid_files.append(doc)
+                
+                # Add valid files to the session state, avoiding duplicates
                 for doc in valid_files:
                     if doc not in docs:
                         docs.append(doc)
                 st.session_state.docs = docs
+    
         else:
             # If 3 files are uploaded, disable the uploader and show a "Clear All" button
             st.warning("You have uploaded 3 documents. You cannot upload more.")
@@ -212,19 +220,18 @@ def main():
                 st.session_state.docs = docs
                 st.success("All documents have been cleared. You can upload new documents now.")
     
-                st.experimental_rerun()
-   
-        st.write(f"You have uploaded {len(docs)} documents.")
+                # Re-enable file upload after clearing documents
+                # Reset uploader to accept new files
+                st.experimental_rerun()  # This will cause the app to reload and reset the file uploader
     
-        # Block the process button if there are more than 3 files
-        if len(docs) > 3:
-            process_button_disabled = True
-        else:
-            process_button_disabled = False
+        # Display the number of uploaded files
+        st.write(f"You have uploaded {len(docs)} documents.")
     
         # Process documents after the user clicks the 'Process' button
         if docs:
+            process_button_disabled = len(docs) >= 3
             process_button = st.button("Process", disabled=process_button_disabled)
+    
             if process_button:
                 # Only process up to 3 files
                 docs_to_process = docs[:3]
