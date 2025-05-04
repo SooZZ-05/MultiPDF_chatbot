@@ -143,9 +143,17 @@ def auto_play_audio(text, lang="en"):
     mp3_fp.seek(0)
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
+    # audio_html = f"""
+    #     <audio autoplay="true" style="display:none">
+    #         <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+    #     </audio>
+    # """
+    autoplay_attr = "autoplay" if autoplay else "controls"
+    style = "display:none;" if autoplay else "width: 100%;"
     audio_html = f"""
-        <audio autoplay="true" style="display:none">
+        <audio controls style="width: 100%;">
             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+            Your browser does not support the audio element.
         </audio>
     """
     return audio_html
@@ -161,9 +169,7 @@ def display_chat_history():
                         st.markdown(message["content"])
                 with col2:
                     if st.button("🔊", key=f"play_{i}"):
-                        # audio_fp = text_to_speech_base64(message["content"])
-                        # st.audio(audio_fp.read(), format="audio/mp3")
-                        audio_html = auto_play_audio(message["content"])
+                        audio_html = auto_play_audio(message["content"], autoplay=False)
                         st.markdown(audio_html, unsafe_allow_html=True)
 
 def main():
