@@ -78,7 +78,7 @@ def summarize_documents(labeled_docs):
     for doc in labeled_docs:
         prompt = f"Please summarize the following document:\n\n{doc['text'][:4000]}\n\nSummary:"
         response = llm.predict(prompt)
-        summaries.append({"label": doc["label"], "summary": response.strip()})s
+        summaries.append({"label": doc["label"], "summary": response.strip()})
     return summaries
 
 def is_summary_question(question: str) -> bool:
@@ -199,4 +199,3 @@ def save_chat_to_pdf(chat_history):
     # Output PDF
     pdf_bytes = pdf.output(dest='S').encode('latin1')
     return BytesIO(pdf_bytes)
-
