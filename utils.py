@@ -168,7 +168,7 @@ def save_chat_to_pdf(chat_history):
                 assistant_msg = remove_newlines(strip_emojis(chat_history[i + 1]["content"]).strip())
                 i += 1  # Skip assistant entry on next loop
             assistant_msg = re.sub(r"[|\#\-\t]", " ", assistant_msg)
-            assistant_msg = re.sub(r"\s+", " ", cleaned_text).strip()  # Normalize spaces
+            assistant_msg = re.sub(r"\s+", " ", assistant_msg).strip()  # Normalize spaces
             label_assistant = f"Assistant:\n{assistant_msg}"
 
             # Estimate box heights
