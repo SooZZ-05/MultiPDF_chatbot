@@ -183,10 +183,10 @@ def main():
     # Sidebar for PDF Upload
     with st.sidebar:
         st.subheader("Your Documents")
-        docs = st.file_uploader("📄 Upload up to 3 documents (PDF, DOCX, or TXT)",
+        docs = st.file_uploader("📄 Upload up to 2 documents (PDF, DOCX, or TXT)",
                                type=["pdf", "docx", "txt"],
                                accept_multiple_files=True,
-                               disabled=len(st.session_state.get('uploaded_docs', [])) >= 3,
+                               disabled=len(st.session_state.get('uploaded_docs', [])) >= 2,
                                key="file_uploader")
     
         if 'uploaded_docs' not in st.session_state:
@@ -197,9 +197,9 @@ def main():
                 if doc not in st.session_state['uploaded_docs']:
                     st.session_state['uploaded_docs'].append(doc)
     
-        if len(st.session_state['uploaded_docs']) > 3:
-            st.warning("You can upload a maximum of 3 documents.")
-            st.session_state['uploaded_docs'] = st.session_state['uploaded_docs'][:3]
+        if len(st.session_state['uploaded_docs']) > 2:
+            st.warning("You can upload a maximum of 2 documents.")
+            st.session_state['uploaded_docs'] = st.session_state['uploaded_docs'][:2]
     
         for i, doc in enumerate(st.session_state['uploaded_docs']):
             st.write(f"Document {i+1}: {doc.name}")
