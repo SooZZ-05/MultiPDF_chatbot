@@ -85,6 +85,49 @@ def is_summary_question(question: str) -> bool:
     summary_keywords = ["summary", "summarize", "overview", "main idea", "key points", "what is in", "content of"]
     return any(keyword in question.lower() for keyword in summary_keywords)
 
+def format_response(text):
+    # Add double newline after sentence-ending punctuation followed by a capital letter
+    text = re.sub(r"(?<=[.!?])\s+(?=[A-Z])", "\n\n", text)
+    
+    # Format bullet points (e.g., "●" should be followed by a newline for better formatting)
+    text = re.sub(r"●", "\n\n●", text)
+    
+    # Define a set to track used emojis (to avoid multiple replacements for the same keyword)
+    used_emojis = set()
+    
+    # Mapping of words to emojis
+    replacements = {
+        r"\bCPU\b": "🧠 CPU", 
+        r"\bprocessor\b": "🧠 Processor",
+        r"\bRAM\b": "💾 RAM", 
+        r"\bSSD\b": "💽 SSD",
+        r"\bstorage\b": "💽 Storage", 
+        r"\bdisplay\b": "🖥️ Display",
+        r"\bscreen\b": "🖥️ Screen", 
+        r"\bbattery\b": "🔋 Battery",
+        r"\bgraphics\b": "🎮 Graphics", 
+        r"\bprice\b": "💰 Price",
+        r"\bweight\b": "⚖️ Weight",
+    }
+    
+    # Perform replacements while ensuring no emoji is replaced more than once
+    for word, emoji in replacements.items():
+        if emoji not in used_emojis:
+            text = re.sub(word, emoji, text, count=1, flags=re.IGNORECASE)
+            used_emojis.add(emoji)
+    
+    # Ensure that product numbers and names stay on the same line (no break)
+    text = re.sub(r"(\d+)\.\s*(\S.*?)(?=\s*\d+\.|\n|$)", r"\1. \2", text)  # Ensures number and name together
+    
+    # Add RM symbol to prices (assuming the price is a numeric value followed by "RM")
+    text = re.sub(r"(\d{1,3}(?:,\d{3})*)(RM)", r"RM \1", text)  # Ensure 'RM' comes before the number
+
+    # Remove excessive newlines (more than two consecutive newlines)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    # Return the formatted text with any leading/trailing whitespace stripped
+    return text.strip()
+
 def extract_target_doc_label(question: str, docs: list, cutoff: float = 0.6) -> str:
     question_lower = question.lower()
     labels = [item['label'].lower() for item in docs]
