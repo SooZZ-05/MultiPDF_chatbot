@@ -185,8 +185,10 @@ def main():
         st.subheader("Your Documents")
         docs = st.session_state.get("docs", [])
     
-        # Allow file upload only if there are fewer than 3 documents uploaded
-        if len(docs) < 3:
+        # Max document limit
+        max_docs = 3
+    
+        if len(docs) < max_docs:
             new_docs = st.file_uploader(
                 "📄 Upload documents (PDF, DOCX, or TXT)",
                 type=["pdf", "docx", "txt"],
@@ -195,51 +197,46 @@ def main():
             )
     
             if new_docs:
-                # Filter out invalid files (only PDF, DOCX, TXT allowed)
                 valid_files = []
                 for doc in new_docs:
-                    if doc.type in ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']:
-                        # Optionally sanitize file name to remove special characters
+                    if doc.type in [
+                        "application/pdf",
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        "text/plain"
+                    ]:
                         doc.name = os.path.basename(doc.name)
                         valid_files.append(doc)
     
-                # Add valid files to the session state, avoiding duplicates
                 for doc in valid_files:
                     if doc not in docs:
                         docs.append(doc)
                 st.session_state.docs = docs
     
         else:
-            # Block file upload if 3 files have been uploaded
-            st.warning("You have uploaded 3 documents. You cannot upload more.")
-            
+            st.warning(f"You have uploaded {max_docs} documents. You cannot upload more.")
+    
             clear_button = st.button("Clear All Documents")
             if clear_button:
-                # Clear all documents from session state
-                docs.clear()  # Clear the uploaded documents list
+                docs.clear()
                 st.session_state.docs = docs
                 st.success("All documents have been cleared. You can upload new documents now.")
     
-                # Re-enable file upload after clearing documents
-                st.experimental_rerun()  # This will cause the app to reload and reset the file uploader
+                # Force reset uploader widget
+                st.session_state["file_uploader_key"] = str(os.urandom(8))
+                st.experimental_rerun()
     
-        # Display the number of uploaded files
-        st.write(f"You have uploaded {len(docs)} documents.")
+        st.write(f"You have uploaded {len(docs)} document(s).")
     
-        # Process documents after the user clicks the 'Process' button
         process_button = st.button("Process")
         if process_button:
-            # Only process up to 3 files (even if more are uploaded)
-            docs_to_process = docs[:3]
-            st.session_state.docs = docs_to_process  # Update session state to reflect the limit
+            docs_to_process = docs[:max_docs]
+            st.session_state.docs = docs_to_process
             st.write("Processing the documents...")
     
-            # Process the documents (e.g., summarize, count words, etc.)
             with st.spinner("Processing..."):
                 labeled_docs = get_labeled_documents_from_any(docs_to_process)
                 st.session_state.labeled_docs = labeled_docs
-                doc_summaries = summarize_documents(labeled_docs)
-                st.session_state.doc_summaries = doc_summaries
+                st.session_state.doc_summaries = summarize_documents(labeled_docs)
                 st.session_state.word_counts = count_words_in_documents(labeled_docs)
     
                 raw_text = get_document_text(docs_to_process)
