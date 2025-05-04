@@ -185,9 +185,8 @@ def main():
         st.subheader("Your Documents")
         docs = st.session_state.get("docs", [])
     
-        # Check if user has uploaded 3 or more files
+        # Allow file upload only if there are fewer than 3 documents uploaded
         if len(docs) < 3:
-            # Allow file upload only if there are less than 3 documents uploaded
             new_docs = st.file_uploader(
                 "📄 Upload documents (PDF, DOCX, or TXT)",
                 type=["pdf", "docx", "txt"],
@@ -209,6 +208,7 @@ def main():
                     if doc not in docs:
                         docs.append(doc)
                 st.session_state.docs = docs
+    
         else:
             # Block file upload if 3 files have been uploaded
             st.warning("You have uploaded 3 documents. You cannot upload more.")
