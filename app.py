@@ -14,7 +14,7 @@ from langchain.embeddings.base import Embeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
-from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question, extract_target_doc_label, get_labeled_documents, is_wordcount_question, count_words_in_documents, save_chat_to_pdf
+from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question, extract_target_doc_label, get_labeled_documents_from_any, is_wordcount_question, count_words_in_documents, save_chat_to_pdf
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
@@ -189,9 +189,9 @@ def main():
             docs = docs[:3]
         process_button = st.button("Process")
 
-        if pdf_docs and process_button:
+        if docs and process_button:
             with st.spinner("Processing..."):
-                labeled_docs = get_labeled_documents(pdf_docs)
+                labeled_docs = get_labeled_documents_from_any(docs)
                 st.session_state.labeled_docs = labeled_docs
                 doc_summaries = summarize_documents(labeled_docs)
                 st.session_state.doc_summaries = doc_summaries
