@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import os
 import numpy as np
 import base64
@@ -134,7 +135,8 @@ def text_to_speech_base64(text, lang="en"):
     mp3_fp = BytesIO()
     tts.write_to_fp(mp3_fp)
     mp3_fp.seek(0)
-    return mp3_fp
+    # return mp3_fp
+    return base64.b64encode(mp3_fp.read()).decode()
 
 def auto_play_audio(text, lang="en"):
     try:
@@ -155,6 +157,59 @@ def auto_play_audio(text, lang="en"):
     except Exception as e:
         return f"<p style='color:red;'>Error generating audio: {e}</p>"
 
+def toggle_audio_player(text, key):
+    audio_base64 = text_to_speech_base64(text)
+    audio_id = f"audio_{key}"
+    audio_html = f"""
+    <audio id="{audio_id}" src="data:audio/mp3;base64,{audio_base64}"></audio>
+    <button id="btn_{key}">🔊</button>
+    <script>
+    if (!window.activeAudio) {{
+        window.activeAudio = null;
+        window.activeButton = null;
+    }}
+
+    const btn_{key} = document.getElementById("btn_{key}");
+    const audio_{key} = document.getElementById("{audio_id}");
+
+    function toggleAudio_{key}() {{
+        if (window.activeAudio && window.activeAudio !== audio_{key}) {{
+            window.activeAudio.pause();
+            window.activeAudio.currentTime = 0;
+            if (window.activeButton) {{
+                window.activeButton.innerText = "🔊";
+            }}
+        }}
+
+        if (audio_{key}.paused) {{
+            audio_{key}.play();
+            btn_{key}.innerText = "❌";
+            window.activeAudio = audio_{key};
+            window.activeButton = btn_{key};
+        }} else {{
+            audio_{key}.pause();
+            audio_{key}.currentTime = 0;
+            btn_{key}.innerText = "🔊";
+            window.activeAudio = null;
+            window.activeButton = null;
+        }}
+    }}
+
+    btn_{key}.onclick = toggleAudio_{key};
+
+    audio_{key}.addEventListener("ended", function() {{
+        btn_{key}.innerText = "🔊";
+        if (window.activeAudio === audio_{key}) {{
+            window.activeAudio = null;
+            window.activeButton = null;
+        }}
+    }});
+    </script>
+    
+    
+    return audio_html
+
+
 def display_chat_history():
     chat_history_container = st.container()
     for i, message in enumerate(st.session_state.chat_history):
@@ -165,12 +220,11 @@ def display_chat_history():
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])
                 with col2:
+                    audio_html = toggle_audio_player(message["content"], i)
+                    st.markdown(audio_html, unsafe_allow_html=True)
                     # if st.button("🔊", key=f"play_{i}"):
-                    #     audio_html = auto_play_audio(message["content"])
-                    #     st.markdown(audio_html, unsafe_allow_html=True)
-                    if st.button("🔊", key=f"play_{i}"):
-                        audio_fp = text_to_speech_base64(message["content"])
-                        st.audio(audio_fp.read(), format="audio/mp3")
+                    #     audio_fp = text_to_speech_base64(message["content"])
+                    #     st.audio(audio_fp.read(), format="audio/mp3")
 
 def main():
     set_openai_api_key()
