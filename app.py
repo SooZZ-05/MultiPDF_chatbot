@@ -316,15 +316,16 @@ def main():
                 st.success("Chat history saved as PDF!")
         
             elif save_option == "🖨️ Print with Chat History (Browser Print)":
-                # JavaScript to open print dialog
-                components.html(
+                # Trigger print from main window context using markdown
+                st.markdown(
                     """
                     <script>
-                        window.print();
+                        window.onload = function() {
+                            window.print();
+                        }
                     </script>
                     """,
-                    height=0,
-                    width=0
+                    unsafe_allow_html=True
                 )
                 st.info("Browser print dialog opened. Use it to print or save as PDF.")
 
