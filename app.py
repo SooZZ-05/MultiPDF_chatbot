@@ -39,62 +39,25 @@ def get_document_text(docs):
             text += stringio.read().decode("utf-8") + "\n"
     return text
 
-def get_labeled_chunks(docs):
+def get_text_chunks(text):
     text_splitter = CharacterTextSplitter(
         separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
     )
+    return text_splitter.split_text(text)
 
-    all_chunks = []
-    for i, doc in enumerate(docs):
-        label = f"Document {i+1}: {doc.name}"
-        if label.endswith(".pdf"):
-            reader = PdfReader(doc)
-            text = "\n".join([p.extract_text() or "" for p in reader.pages])
-        elif label.endswith(".docx"):
-            document = Document(doc)
-            text = "\n".join([p.text for p in document.paragraphs])
-        elif label.endswith(".txt"):
-            stringio = BytesIO(doc.read())
-            text = stringio.read().decode("utf-8")
-        else:
-            continue
-
-        chunks = text_splitter.split_text(text)
-        for j, chunk in enumerate(chunks):
-            all_chunks.append({
-                "content": chunk,
-                "metadata": {
-                    "source": label,
-                    "chunk_id": j
-                }
-            })
-    return all_chunks
-
-def get_vectorstore(labeled_chunks):
+def get_vectorstore(text_chunks):
     embeddings = OpenAIEmbeddings()
-    texts = [chunk["content"] for chunk in labeled_chunks]
-    metadatas = [chunk["metadata"] for chunk in labeled_chunks]
-    return FAISS.from_texts(texts=texts, embedding=embeddings, metadatas=metadatas)
+    return FAISS.from_texts(texts=text_chunks, embedding=embeddings)
 
 def get_conversation_chain(vectorstore):
-    system_prompt = (
-        "When the user refers to 'document 1', 'document 2', etc., interpret these as labels "
-        "like 'Document 1: filename.pdf' from the uploaded documents. Only answer using the relevant document's content."
-    )
-
     llm = ChatOpenAI(
         model_name="gpt-3.5-turbo",
         temperature=0.3,
         openai_api_key=os.getenv("OPENAI_API_KEY"),
-        system_message=system_prompt
     )
-
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, output_key="answer")
-
     return ConversationalRetrievalChain.from_llm(
-        llm=llm,
-        retriever=vectorstore.as_retriever(search_kwargs={"k": 20}),
-        memory=memory,
+        llm=llm, retriever=vectorstore.as_retriever(search_kwargs={"k": 20}), memory=memory,
         return_source_documents=True,
         output_key="answer"
     )
@@ -154,12 +117,6 @@ def handle_userinput(user_question):
         response = st.session_state.conversation({'question': user_question})
         answer = response.get('answer', '').strip()
         source_docs = response.get('source_documents', [])
-        if source_docs:
-            sources = "\n\n".join(
-                f"📄 From `{doc.metadata.get('source')}` (chunk {doc.metadata.get('chunk_id')})"
-                for doc in source_docs
-            )
-            answer += f"\n\n---\n{sources}"
 
         grounded = False
         if answer and source_docs:
@@ -248,7 +205,7 @@ def main():
             st.write(f"Document {i+1}: {doc.name}")
     
         if st.session_state['uploaded_docs']:
-            if st.button("Clear Cache"):
+            if st.button("Remove All Documents"):
                 st.session_state['uploaded_docs'] = []
                 # Force a rerun to update the file uploader's disabled state
                 st.rerun()
@@ -263,8 +220,9 @@ def main():
                 st.session_state.doc_summaries = doc_summaries
                 st.session_state.word_counts = count_words_in_documents(labeled_docs)
     
-                labeled_chunks = get_labeled_chunks(st.session_state['uploaded_docs'])
-                vectorstore = get_vectorstore(labeled_chunks)
+                raw_text = get_document_text(st.session_state['uploaded_docs'])
+                text_chunks = get_text_chunks(raw_text)
+                vectorstore = get_vectorstore(text_chunks)
                 st.session_state.conversation = get_conversation_chain(vectorstore)
     
                 st.success("PDFs successfully processed!")
