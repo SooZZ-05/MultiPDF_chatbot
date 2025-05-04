@@ -204,7 +204,8 @@ def main():
                 # Check if the number of documents exceeds 3
                 if len(docs) > 3:
                     st.error("You can upload a maximum of 3 unique documents. Please remove some files.")
-                    docs = docs[:3]  # Keep only the first 3 documents
+                    # Limit the number of documents to 3
+                    docs = docs[:3]
                     st.session_state.docs = docs  # Update the session state with only the first 3 documents
                 else:
                     with st.spinner("Processing..."):
