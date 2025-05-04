@@ -128,26 +128,44 @@ def estimate_multicell_height(pdf, text, width, line_height):
     return len(lines) * line_height + 4 
 
 def extract_table(text):
-    # Remove emojis and cleanup
+   # Remove emojis and control characters
     text = re.sub(r'[^\x00-\x7F]+', '', text)
     lines = text.splitlines()
-    clean_lines = [line for line in lines if '|' in line and not line.strip().startswith('#')]
-    
-    # Remove separator lines
-    clean_lines = [re.sub(r'\s*\|?\s*-+\s*\|?', '', line) for line in clean_lines]
-    
-    # Split by | and clean each cell
+
+    # Step 1: Merge wrapped lines
+    merged_lines = []
+    current_line = ''
+    for line in lines:
+        if '|' in line:
+            if current_line:
+                merged_lines.append(current_line)
+            current_line = line.strip()
+        else:
+            current_line += ' ' + line.strip()
+    if current_line:
+        merged_lines.append(current_line)
+
+    # Step 2: Remove header separators and filter lines
+    clean_lines = []
+    for line in merged_lines:
+        if re.match(r'^\s*\|?[- ]+\|?[- ]*$', line):
+            continue
+        if not '|' in line:
+            continue
+        clean_lines.append(line.strip('| '))
+
+    # Step 3: Split into cells
     table_data = []
     for line in clean_lines:
-        parts = [cell.strip() for cell in line.strip('|').split('|') if cell.strip()]
-        if parts:
-            table_data.append(parts)
-    
-    # Remove rows that don't match the header length
+        row = [cell.strip() for cell in line.split('|')]
+        table_data.append(row)
+
+    # Step 4: Normalize rows by header length
     max_len = max(len(row) for row in table_data)
-    table_data = [row for row in table_data if len(row) == max_len]
-    
+    table_data = [row + [''] * (max_len - len(row)) for row in table_data if len(row) >= 2]
+
     return table_data
+
 
 def draw_table(pdf, table_data, col_width=63, line_height=8):
     # Draw header row with bold font
