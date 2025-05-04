@@ -183,33 +183,21 @@ def main():
     # Sidebar for PDF Upload
     with st.sidebar:
         st.subheader("Your Documents")
-        if "docs" not in st.session_state:
-            st.session_state.docs = []
-    
-        docs = st.session_state.docs
-        for i, doc in enumerate(docs):
-            col1, col2 = st.columns([4, 1])
-            with col1:
-                st.write(f"{doc.name}")
-            with col2:
-                if st.button("❌", key=f"remove_{i}"):
-                    del st.session_state.docs[i]
-                    st.experimental_rerun()
-
-        if len(docs) < 3:
-            new_docs = st.file_uploader(
+        try:
+            docs = st.file_uploader(
                 "📄 Upload up to 3 documents (PDF, DOCX, or TXT)",
                 type=["pdf", "docx", "txt"],
-                accept_multiple_files=True,
-                key="file_uploader_key"
+                accept_multiple_files=True
             )
-            if new_docs:
-                for doc in new_docs:
-                    if doc not in docs and len(st.session_state.docs) < 3:
-                        st.session_state.docs.append(doc)
-                st.experimental_rerun()
-        else:
-            st.info("You have uploaded the maximum of 3 documents.")
+    
+            if docs and len(docs) > 3:
+                st.error("You can upload a maximum of 3 documents.")
+                docs = docs[:3]  # Optional: truncate to first 3 files
+            else:
+                process_button = st.button("Process")
+    
+        except Exception as e:
+            st.error(f"An error occurred during upload: {str(e)}")
             
         if docs:
             process_button = st.button("Process")
