@@ -169,8 +169,7 @@ def save_chat_to_pdf(chat_history):
                 i += 1  # Skip assistant entry on next loop
             # assistant_msg = re.sub(r"[|\#\-\t]", " ", assistant_msg)
             # assistant_msg = re.sub(r"\s+", " ", assistant_msg).strip()  # Normalize spaces
-            assistant_msg = re.sub(r"[|\#\-\t]", " ", assistant_msg)
-            assistant_msg = re.sub(r"[ ]{2,}", " ", assistant_msg)
+            assistant_msg = re.sub(r"[|\#\-]", " ", assistant_msg
 
             label_assistant = f"Assistant:\n{assistant_msg}"
 
