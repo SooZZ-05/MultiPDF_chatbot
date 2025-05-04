@@ -190,31 +190,28 @@ def main():
                 accept_multiple_files=True
             )
     
-            if docs and len(docs) > 3:
-                st.error("You can upload a maximum of 3 documents.")
-                docs = docs[:3]  # Optional: truncate to first 3 files
-            else:
-                process_button = st.button("Process")
+            if docs:
+                if len(docs) > 3:
+                    st.error("You can upload a maximum of 3 documents.")
+                else:
+                    if st.button("Process"):
+                        with st.spinner("Processing..."):
+                            labeled_docs = get_labeled_documents_from_any(docs)
+                            st.session_state.labeled_docs = labeled_docs
+                            doc_summaries = summarize_documents(labeled_docs)
+                            st.session_state.doc_summaries = doc_summaries
+                            st.session_state.word_counts = count_words_in_documents(labeled_docs)
+    
+                            raw_text = get_document_text(docs)
+                            text_chunks = get_text_chunks(raw_text)
+                            vectorstore = get_vectorstore(text_chunks)
+                            st.session_state.conversation = get_conversation_chain(vectorstore)
+    
+                        st.success("Documents successfully processed!")
     
         except Exception as e:
             st.error(f"An error occurred during upload: {str(e)}")
-            
-        if docs:
-            process_button = st.button("Process")
-            if process_button:
-                with st.spinner("Processing..."):
-                    labeled_docs = get_labeled_documents_from_any(docs)
-                    st.session_state.labeled_docs = labeled_docs
-                    doc_summaries = summarize_documents(labeled_docs)
-                    st.session_state.doc_summaries = doc_summaries
-                    st.session_state.word_counts = count_words_in_documents(labeled_docs)
-    
-                    raw_text = get_document_text(docs)
-                    text_chunks = get_text_chunks(raw_text)
-                    vectorstore = get_vectorstore(text_chunks)
-                    st.session_state.conversation = get_conversation_chain(vectorstore)
-    
-                st.success("PDFs successfully processed!")
+
 
         st.subheader("Chat Options")
         save_chat_button = st.button("💾 Save Chat to PDF")
