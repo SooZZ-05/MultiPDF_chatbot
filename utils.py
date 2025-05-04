@@ -190,7 +190,21 @@ def save_chat_to_pdf(chat_history):
             pdf.rect(10, y_start, box_width, assistant_box_height)
             pdf.set_xy(12, y_start + 2)
             pdf.set_text_color(0, 102, 204)
-            pdf.multi_cell(0, line_height, label_assistant)
+            if '|' in assistant_msg and '\n' in assistant_msg:
+                try:
+                    rows = [row.strip() for row in assistant_msg.splitlines() if '|' in row]
+                    parsed_table = [ [cell.strip() for cell in row.split('|')[1:-1]] for row in rows ]
+            
+                    col_widths = [box_width // len(parsed_table[0])] * len(parsed_table[0])
+                    for row in parsed_table:
+                        for j, cell in enumerate(row):
+                            pdf.cell(col_widths[j], line_height, cell, border=1)
+                        pdf.ln(line_height)
+                except Exception as e:
+                    # fallback to plain text if parsing fails
+                    pdf.multi_cell(0, line_height, label_assistant)
+            else:
+                pdf.multi_cell(0, line_height, label_assistant)
             pdf.set_text_color(0, 0, 0)
             pdf.ln(4)
 
