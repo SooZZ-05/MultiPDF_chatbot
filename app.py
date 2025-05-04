@@ -184,25 +184,28 @@ def main():
     with st.sidebar:
         st.subheader("Your Documents")
     
-        # Initialize session state for uploads
         if "uploaded_docs" not in st.session_state:
             st.session_state.uploaded_docs = []
     
-        uploaded = st.file_uploader(
-            "📄 Upload documents (PDF, DOCX, or TXT)",
+        # Upload one file at a time
+        new_file = st.file_uploader(
+            "📄 Upload one document (PDF, DOCX, or TXT)",
             type=["pdf", "docx", "txt"],
-            accept_multiple_files=True,
             key="uploader"
         )
     
-        # Add only new files and limit to 3
-        if uploaded:
-            if len(uploaded) + len(st.session_state.uploaded_docs) > 3:
-                st.warning("You can only upload a total of 3 documents.")
+        # If file uploaded, append to session state
+        if new_file is not None:
+            if len(st.session_state.uploaded_docs) >= 3:
+                st.warning("Maximum of 3 documents allowed.")
             else:
-                st.session_state.uploaded_docs.extend(uploaded)
+                # Prevent duplicates
+                if new_file.name not in [f.name for f in st.session_state.uploaded_docs]:
+                    st.session_state.uploaded_docs.append(new_file)
+                else:
+                    st.info("This file is already uploaded.")
     
-        # Show uploaded documents
+        # Show current uploaded files
         if st.session_state.uploaded_docs:
             st.write("**Uploaded Documents:**")
             for i, doc in enumerate(st.session_state.uploaded_docs):
@@ -228,7 +231,7 @@ def main():
     
                     st.success("Documents successfully processed!")
                 except Exception as e:
-                    st.error(f"An error occurred during processing: {str(e)}")
+                    st.error(f"An error occurred: {str(e)}")
 
         st.subheader("Chat Options")
         save_chat_button = st.button("💾 Save Chat to PDF")
