@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import os
 import numpy as np
 import base64
@@ -143,22 +144,25 @@ def auto_play_audio(text, lang="en", key="audio"):
     mp3_fp.seek(0)
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
-    # JavaScript audio toggle logic
-    audio_html = f"""
-    <script>
-    const existingAudio = document.getElementById("{key}");
-    if (existingAudio && !existingAudio.paused) {{
-        existingAudio.pause();
-        existingAudio.currentTime = 0;
-    }} else {{
-        var audio = new Audio("data:audio/mp3;base64,{audio_base64}");
-        audio.id = "{key}";
-        audio.play();
-        window.currentAudio = audio;
-    }}
-    </script>
+    html_code = f"""
+    <html>
+    <body>
+        <button onclick="toggleAudio_{key}()">🔊 Play/Pause</button>
+        <audio id="{key}" src="data:audio/mp3;base64,{audio_base64}"></audio>
+        <script>
+        function toggleAudio_{key}() {{
+            var audio = document.getElementById("{key}");
+            if (audio.paused) {{
+                audio.play();
+            }} else {{
+                audio.pause();
+            }}
+        }}
+        </script>
+    </body>
+    </html>
     """
-    return audio_html
+    components.html(html_code, height=70)
 
 
 def display_chat_history():
@@ -171,11 +175,7 @@ def display_chat_history():
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])
                 with col2:
-                    if st.button("🔊", key=f"play_{i}"):
-                        # audio_fp = text_to_speech_base64(message["content"])
-                        # st.audio(audio_fp.read(), format="audio/mp3")
-                        audio_html = auto_play_audio(message["content"], key=f"audio_{i}")
-                        st.markdown(audio_html, unsafe_allow_html=True)
+                    auto_play_audio(message["content"], key=f"audio_{i}")
 
 def main():
     set_openai_api_key()
