@@ -185,9 +185,9 @@ def main():
         st.subheader("Your Documents")
         docs = st.file_uploader("📄 Upload up to 3 documents (PDF, DOCX, or TXT)", type=["pdf", "docx", "txt"], accept_multiple_files=True)
         if docs and len(docs) > 3:
-            st.warning("You can upload a maximum of 3 documents.")
-            docs = docs[:3]
-        process_button = st.button("Process")
+            st.error("You can upload a maximum of 3 documents.")
+        else:
+            process_button = st.button("Process")
 
         if docs and process_button:
             with st.spinner("Processing..."):
