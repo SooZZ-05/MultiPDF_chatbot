@@ -185,7 +185,7 @@ def main():
         st.subheader("Your Documents")
         docs = st.session_state.get("docs", [])
     
-        # Disable file upload when there are 3 documents already
+        # Disable file upload when there are already 3 documents uploaded
         if len(docs) < 3:
             new_docs = st.file_uploader(
                 "📄 Upload documents (PDF, DOCX, or TXT)",
@@ -195,23 +195,30 @@ def main():
             )
     
             if new_docs:
+                # Filter only valid files (PDF, DOCX, TXT) before adding
+                valid_files = [doc for doc in new_docs if doc.type in ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']]
+                
                 # Combine old and new files, avoid duplicates
-                docs = docs + [doc for doc in new_docs if doc not in docs]
-                st.session_state.docs = docs
-    
-                # If there are more than 3 files, limit to 3
+                docs += [doc for doc in valid_files if doc not in docs]
+                
+                # Ensure the list does not exceed 3 documents
                 if len(docs) > 3:
-                    docs = docs[:3]  # Keep only the first 3 files
+                    docs = docs[:3]
                     st.session_state.docs = docs  # Update the session state with the limited list
                     st.warning("You can upload a maximum of 3 unique documents. The extra files have been discarded.")
+    
+                else:
+                    st.session_state.docs = docs
+    
         else:
             st.info("You have already uploaded 3 documents. Upload is disabled.")
     
+        # Processing the documents once the "Process" button is clicked
         if docs:
             process_button = st.button("Process")
             if process_button:
+                # Process the documents as usual
                 with st.spinner("Processing..."):
-                    # Process the documents as usual
                     labeled_docs = get_labeled_documents_from_any(docs)
                     st.session_state.labeled_docs = labeled_docs
                     doc_summaries = summarize_documents(labeled_docs)
