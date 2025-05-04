@@ -127,53 +127,6 @@ def estimate_multicell_height(pdf, text, width, line_height):
     lines = pdf.multi_cell(width, line_height, text, split_only=True)
     return len(lines) * line_height + 4 
 
-def extract_table(text):
-    # Remove emojis and non-ASCII characters
-    text = re.sub(r'[^\x00-\x7F]+', '', text)
-    lines = text.splitlines()
-
-    # Keep only rows that are pipe-separated and not separator lines
-    table_lines = []
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-        if re.match(r'^\s*\|?\s*-+\s*\|?', line):  # Skip lines of dashes
-            continue
-        if '|' in line:
-            table_lines.append(line.strip('|'))
-
-    # Now split each line into cells
-    table_data = []
-    for line in table_lines:
-        cells = [cell.strip() for cell in line.split('|')]
-        table_data.append(cells)
-
-    # If empty, return
-    if not table_data:
-        return []
-
-    # Remove rows with fewer columns than the header
-    header_len = len(table_data[0])
-    cleaned_data = [row for row in table_data if len(row) == header_len]
-
-    return cleaned_data
-
-
-def draw_table(pdf, table_data, col_width=63, line_height=8):
-    # Draw header row with bold font
-    pdf.set_font("Arial", 'B', 12)
-    for header in table_data[0]:
-        pdf.cell(col_width, line_height, header, border=1)
-    pdf.ln(line_height)
-
-    # Draw the rest of the rows
-    pdf.set_font("Arial", '', 11)
-    for row in table_data[1:]:
-        for cell in row:
-            pdf.cell(col_width, line_height, cell, border=1)
-        pdf.ln(line_height)
-
 def save_chat_to_pdf(chat_history):
     def strip_emojis(text):
         return re.sub(r'[^\x00-\x7F]+', '', text)
@@ -214,14 +167,10 @@ def save_chat_to_pdf(chat_history):
             if i + 1 < len(chat_history) and chat_history[i + 1]["role"] == "assistant":
                 assistant_msg = remove_newlines(strip_emojis(chat_history[i + 1]["content"]).strip())
                 i += 1  # Skip assistant entry on next loop
+            # assistant_msg = re.sub(r"[|\#\-\t]", " ", assistant_msg)
+            # assistant_msg = re.sub(r"\s+", " ", assistant_msg).strip()  # Normalize spaces
+            assistant_msg = re.sub(r"[|\#\-]", " ", assistant_msg)
 
-            if assistant_msg.count("|") > 5:
-                try:
-                    table_data = extract_table(assistant_msg)
-                except:
-                    table_data = []
-            else:
-                table_data = []
             label_assistant = f"Assistant:\n{assistant_msg}"
 
             # Estimate box heights
@@ -246,12 +195,6 @@ def save_chat_to_pdf(chat_history):
             pdf.set_xy(12, y_start + 2)
             pdf.set_text_color(0, 102, 204)
             pdf.multi_cell(0, line_height, label_assistant)
-            if table_data:
-                pdf.ln(2)
-                if pdf.get_y() + (len(table_data) + 1) * line_height > usable_height:
-                    pdf.add_page()
-                draw_table(pdf, table_data)
-                pdf.ln(4)
             pdf.set_text_color(0, 0, 0)
             pdf.ln(4)
 
