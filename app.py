@@ -184,7 +184,7 @@ def main():
     with st.sidebar:
         st.subheader("Your Documents")
         docs = st.session_state.get("docs", [])
-        
+    
         # Check if there are exactly 3 files, disable file uploader and show clear option
         if len(docs) < 3:
             # Allow file upload if less than 3 documents are uploaded
@@ -207,11 +207,17 @@ def main():
         else:
             # If 3 files are uploaded, disable the uploader and show a "Clear All" button
             st.warning("You have uploaded 3 documents. You cannot upload more.")
+            
             clear_button = st.button("Clear All Documents")
             if clear_button:
-                docs.clear()  # Clear all files
+                # Clear all documents from session state
+                docs.clear()  # Clear the uploaded documents list
                 st.session_state.docs = docs
                 st.success("All documents have been cleared. You can upload new documents now.")
+    
+                # Re-enable file upload after clearing documents
+                # Reset uploader to accept new files
+                st.experimental_rerun()  # This will cause the app to reload and reset the file uploader
     
         # Display the number of uploaded files
         st.write(f"You have uploaded {len(docs)} documents.")
