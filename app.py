@@ -6,6 +6,7 @@ import base64
 from gtts import gTTS
 from io import BytesIO
 from PyPDF2 import PdfReader
+from docx import Document
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
 from langchain_community.embeddings import OpenAIEmbeddings
@@ -19,14 +20,23 @@ from utils import handle_greeting, handle_farewell, summarize_documents, is_summ
 def set_openai_api_key():
     os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
-def get_pdf_text(pdf_docs):
+def get_document_text(docs):
     text = ""
-    for pdf in pdf_docs:
-        pdf_reader = PdfReader(pdf)
-        for page in pdf_reader.pages:
-            content = page.extract_text()
-            if content:
-                text += content
+    for doc in docs:
+        name = doc.name.lower()
+        if name.endswith(".pdf"):
+            pdf_reader = PdfReader(doc)
+            for page in pdf_reader.pages:
+                content = page.extract_text()
+                if content:
+                    text += content
+        elif name.endswith(".docx"):
+            word_doc = Document(doc)
+            for para in word_doc.paragraphs:
+                text += para.text + "\n"
+        elif name.endswith(".txt"):
+            stringio = BytesIO(doc.read())
+            text += stringio.read().decode("utf-8") + "\n"
     return text
 
 def get_text_chunks(text):
@@ -173,7 +183,10 @@ def main():
     # Sidebar for PDF Upload
     with st.sidebar:
         st.subheader("Your Documents")
-        pdf_docs = st.file_uploader("📄 Upload your PDFs here", accept_multiple_files=True)
+        docs = st.file_uploader("📄 Upload up to 3 documents (PDF, DOCX, or TXT)", type=["pdf", "docx", "txt"], accept_multiple_files=True)
+        if docs and len(docs) > 3:
+            st.warning("You can upload a maximum of 3 documents.")
+            docs = docs[:3]
         process_button = st.button("Process")
 
         if pdf_docs and process_button:
@@ -184,8 +197,7 @@ def main():
                 st.session_state.doc_summaries = doc_summaries
                 st.session_state.word_counts = count_words_in_documents(labeled_docs)
 
-                raw_text = "\n".join(doc["text"] for doc in labeled_docs)
-                # raw_text = get_pdf_text(pdf_docs)
+                raw_text = get_document_text(docs)
                 text_chunks = get_text_chunks(raw_text)
                 vectorstore = get_vectorstore(text_chunks)
                 st.session_state.conversation = get_conversation_chain(vectorstore)
