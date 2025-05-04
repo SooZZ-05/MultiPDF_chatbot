@@ -183,70 +183,47 @@ def main():
     # Sidebar for PDF Upload
     with st.sidebar:
         st.subheader("Your Documents")
-        docs = st.session_state.get("docs", [])
+        docs = st.file_uploader("📄 Upload up to 3 documents (PDF, DOCX, or TXT)",
+                               type=["pdf", "docx", "txt"],
+                               accept_multiple_files=True,
+                               disabled=len(st.session_state.get('uploaded_docs', [])) >= 3,
+                               key="file_uploader")
     
-        # Max document limit
-        max_docs = 3
+        if 'uploaded_docs' not in st.session_state:
+            st.session_state['uploaded_docs'] = []
     
-        if len(docs) < max_docs:
-            new_docs = st.file_uploader(
-                "📄 Upload documents (PDF, DOCX, or TXT)",
-                type=["pdf", "docx", "txt"],
-                accept_multiple_files=True,
-                key="file_uploader_key"
-            )
+        if docs:
+            for doc in docs:
+                if doc not in st.session_state['uploaded_docs']:
+                    st.session_state['uploaded_docs'].append(doc)
     
-            if new_docs:
-                valid_files = []
-                for doc in new_docs:
-                    if doc.type in [
-                        "application/pdf",
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        "text/plain"
-                    ]:
-                        doc.name = os.path.basename(doc.name)
-                        valid_files.append(doc)
+        if len(st.session_state['uploaded_docs']) > 3:
+            st.warning("You can upload a maximum of 3 documents.")
+            st.session_state['uploaded_docs'] = st.session_state['uploaded_docs'][:3]
     
-                for doc in valid_files:
-                    if doc not in docs:
-                        docs.append(doc)
-                st.session_state.docs = docs
+        for i, doc in enumerate(st.session_state['uploaded_docs']):
+            st.write(f"Document {i+1}: {doc.name}")
+            if st.button(f"Remove {doc.name}", key=f"remove_{i}"):
+                st.session_state['uploaded_docs'].pop(i)
+                # Force a rerun to update the file uploader's disabled state
+                st.rerun()
     
-        else:
-            st.warning(f"You have uploaded {max_docs} documents. You cannot upload more.")
+        process_button = st.button("Process", disabled=not st.session_state['uploaded_docs'])
     
-            clear_button = st.button("Clear All Documents")
-            if clear_button:
-                docs.clear()
-                st.session_state.docs = docs
-                st.success("All documents have been cleared. You can upload new documents now.")
-    
-                # Force reset uploader widget
-                st.session_state["file_uploader_key"] = str(os.urandom(8))
-                st.experimental_rerun()
-    
-        st.write(f"You have uploaded {len(docs)} document(s).")
-    
-        process_button = st.button("Process")
-        if process_button:
-            docs_to_process = docs[:max_docs]
-            st.session_state.docs = docs_to_process
-            st.write("Processing the documents...")
-    
+        if st.session_state['uploaded_docs'] and process_button:
             with st.spinner("Processing..."):
-                labeled_docs = get_labeled_documents_from_any(docs_to_process)
+                labeled_docs = get_labeled_documents_from_any(st.session_state['uploaded_docs'])
                 st.session_state.labeled_docs = labeled_docs
-                st.session_state.doc_summaries = summarize_documents(labeled_docs)
+                doc_summaries = summarize_documents(labeled_docs)
+                st.session_state.doc_summaries = doc_summaries
                 st.session_state.word_counts = count_words_in_documents(labeled_docs)
     
-                raw_text = get_document_text(docs_to_process)
+                raw_text = get_document_text(st.session_state['uploaded_docs'])
                 text_chunks = get_text_chunks(raw_text)
                 vectorstore = get_vectorstore(text_chunks)
                 st.session_state.conversation = get_conversation_chain(vectorstore)
     
-            st.success("Documents successfully processed!")
-        elif len(docs) == 0:
-            st.info("No documents uploaded yet.")
+                st.success("PDFs successfully processed!")
 
         st.subheader("Chat Options")
         save_chat_button = st.button("💾 Save Chat to PDF")
