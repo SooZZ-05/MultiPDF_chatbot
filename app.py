@@ -185,47 +185,52 @@ def main():
         st.subheader("Your Documents")
         docs = st.session_state.get("docs", [])
     
-        # Disable file upload when there are already 3 documents uploaded
-        if len(docs) < 3:
-            new_docs = st.file_uploader(
-                "📄 Upload documents (PDF, DOCX, or TXT)",
-                type=["pdf", "docx", "txt"],
-                accept_multiple_files=True,
-                key="file_uploader_key"
-            )
+        # Allow file upload even if there are already 3 documents uploaded
+        new_docs = st.file_uploader(
+            "📄 Upload documents (PDF, DOCX, or TXT)",
+            type=["pdf", "docx", "txt"],
+            accept_multiple_files=True,
+            key="file_uploader_key"
+        )
     
-            if new_docs:
-                # Filter only valid files (PDF, DOCX, TXT) before adding
-                valid_files = [doc for doc in new_docs if doc.type in ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']]
-                
-                # Combine old and new files, avoid duplicates
-                docs += [doc for doc in valid_files if doc not in docs]
-                
-                # Ensure the list does not exceed 3 documents
-                if len(docs) > 3:
-                    docs = docs[:3]
-                    st.session_state.docs = docs  # Update the session state with the limited list
-                    st.warning("You can upload a maximum of 3 unique documents. The extra files have been discarded.")
+        if new_docs:
+            # Filter out invalid files (only PDF, DOCX, TXT allowed)
+            valid_files = [doc for doc in new_docs if doc.type in ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']]
     
-                else:
-                    st.session_state.docs = docs
+            # Add valid files to the session state, avoiding duplicates
+            for doc in valid_files:
+                if doc not in docs:
+                    docs.append(doc)
+            st.session_state.docs = docs
     
+        # Display the number of uploaded files
+        st.write(f"You have uploaded {len(docs)} documents.")
+    
+        # Block the process button if there are more than 3 files
+        if len(docs) > 3:
+            st.warning("You have uploaded more than 3 documents. You cannot process more than 3 files.")
+            process_button_disabled = True
         else:
-            st.info("You have already uploaded 3 documents. Upload is disabled.")
+            process_button_disabled = False
     
-        # Processing the documents once the "Process" button is clicked
+        # Process documents after the user clicks the 'Process' button
         if docs:
-            process_button = st.button("Process")
+            process_button = st.button("Process", disabled=process_button_disabled)
             if process_button:
-                # Process the documents as usual
+                # Only process up to 3 files
+                docs_to_process = docs[:3]
+                st.session_state.docs = docs_to_process  # Update session state to reflect the limit
+                st.write("Processing the documents...")
+    
+                # Process the documents (e.g., summarize, count words, etc.)
                 with st.spinner("Processing..."):
-                    labeled_docs = get_labeled_documents_from_any(docs)
+                    labeled_docs = get_labeled_documents_from_any(docs_to_process)
                     st.session_state.labeled_docs = labeled_docs
                     doc_summaries = summarize_documents(labeled_docs)
                     st.session_state.doc_summaries = doc_summaries
                     st.session_state.word_counts = count_words_in_documents(labeled_docs)
     
-                    raw_text = get_document_text(docs)
+                    raw_text = get_document_text(docs_to_process)
                     text_chunks = get_text_chunks(raw_text)
                     vectorstore = get_vectorstore(text_chunks)
                     st.session_state.conversation = get_conversation_chain(vectorstore)
