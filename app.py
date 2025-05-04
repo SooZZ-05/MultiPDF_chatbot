@@ -98,7 +98,7 @@ def add_emoji_to_response(text):
     
     Emoji: """
     emoji = llm.invoke(prompt).content.strip()
-    return f"{emoji} {text}" if emoji else text
+    return f"{emoji}\n {text}" if emoji else text
 
 def handle_userinput(user_question):
     greeting_reply = handle_greeting(user_question)
