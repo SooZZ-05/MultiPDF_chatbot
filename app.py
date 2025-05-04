@@ -16,6 +16,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question, extract_target_doc_label, get_labeled_documents_from_any, is_wordcount_question, count_words_in_documents, save_chat_to_pdf
 import time
+import re
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
@@ -170,7 +171,7 @@ def handle_userinput(user_question):
             grounded = max_similarity >= 0.7
 
         if not grounded or answer in ["🤷‍♂️ I don't know.", "i'm not sure"]:
-            answer += "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
+            answer = "I'm sorry, but I couldn't find an answer to that question in the documents you provided."
         answer += f"\n\n🕒 Response time: {response_time} seconds"
         # if answer and source_docs:
         #     embedder = OpenAIEmbeddings()
