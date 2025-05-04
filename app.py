@@ -235,7 +235,7 @@ def main():
             st.write(f"Document {i+1}: {doc.name}")
     
         if st.session_state['uploaded_docs']:
-            if st.button("Remove All Documents"):
+            if st.button("Clear Cache"):
                 st.session_state['uploaded_docs'] = []
                 # Force a rerun to update the file uploader's disabled state
                 st.rerun()
