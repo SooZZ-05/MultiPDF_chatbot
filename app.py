@@ -129,14 +129,14 @@ def handle_userinput(user_question):
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
-def text_to_speech_base64(text, lang="en"):
-    tts = gTTS(text, lang=lang)
-    mp3_fp = BytesIO()
-    tts.write_to_fp(mp3_fp)
-    mp3_fp.seek(0)
-    return mp3_fp
+# def text_to_speech_base64(text, lang="en"):
+#     tts = gTTS(text, lang=lang)
+#     mp3_fp = BytesIO()
+#     tts.write_to_fp(mp3_fp)
+#     mp3_fp.seek(0)
+#     return mp3_fp
 
-def auto_play_audio(text, lang="en"):
+def auto_play_audio(text, lang="en", index=0):
     tts = gTTS(text, lang=lang)
     mp3_fp = BytesIO()
     tts.write_to_fp(mp3_fp)
@@ -144,9 +144,38 @@ def auto_play_audio(text, lang="en"):
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
     audio_html = f"""
-        <audio autoplay="true" style="display:none">
+    <div>
+        <audio id="audio_{index}" style="display:none">
             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
         </audio>
+        <button onclick="playAudio({index})">🔊</button>
+        <button onclick="stopAudio({index})">❌</button>
+    </div>
+
+    <script>
+        let currentAudio = null;
+
+        function playAudio(index) {{
+            const newAudio = document.getElementById('audio_' + index);
+            if (currentAudio && currentAudio !== newAudio) {{
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+            }}
+            currentAudio = newAudio;
+            currentAudio.play();
+        }}
+
+        function stopAudio(index) {{
+            const audio = document.getElementById('audio_' + index);
+            if (audio) {{
+                audio.pause();
+                audio.currentTime = 0;
+                if (currentAudio === audio) {{
+                    currentAudio = null;
+                }}
+            }}
+        }}
+    </script>
     """
     return audio_html
 
@@ -160,11 +189,14 @@ def display_chat_history():
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])
                 with col2:
-                    if st.button("🔊", key=f"play_{i}"):
-                        # audio_fp = text_to_speech_base64(message["content"])
-                        # st.audio(audio_fp.read(), format="audio/mp3")
-                        audio_html = auto_play_audio(message["content"])
-                        st.markdown(audio_html, unsafe_allow_html=True)
+                    audio_html = auto_play_audio(message["content"], index=i)
+                    st.markdown(audio_html, unsafe_allow_html=True)
+
+                    # if st.button("🔊", key=f"play_{i}"):
+                    #     # audio_fp = text_to_speech_base64(message["content"])
+                    #     # st.audio(audio_fp.read(), format="audio/mp3")
+                    #     audio_html = auto_play_audio(message["content"])
+                    #     st.markdown(audio_html, unsafe_allow_html=True)
 
 def main():
     set_openai_api_key()
