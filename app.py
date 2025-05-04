@@ -183,35 +183,52 @@ def main():
     # Sidebar for PDF Upload
     with st.sidebar:
         st.subheader("Your Documents")
-        try:
-            docs = st.file_uploader(
-                "📄 Upload up to 3 documents (PDF, DOCX, or TXT)",
-                type=["pdf", "docx", "txt"],
-                accept_multiple_files=True
-            )
     
-            if docs:
-                if len(docs) > 3:
-                    st.error("You can upload a maximum of 3 documents.")
-                else:
-                    if st.button("Process"):
-                        with st.spinner("Processing..."):
-                            labeled_docs = get_labeled_documents_from_any(docs)
-                            st.session_state.labeled_docs = labeled_docs
-                            doc_summaries = summarize_documents(labeled_docs)
-                            st.session_state.doc_summaries = doc_summaries
-                            st.session_state.word_counts = count_words_in_documents(labeled_docs)
+        # Initialize session state for uploads
+        if "uploaded_docs" not in st.session_state:
+            st.session_state.uploaded_docs = []
     
-                            raw_text = get_document_text(docs)
-                            text_chunks = get_text_chunks(raw_text)
-                            vectorstore = get_vectorstore(text_chunks)
-                            st.session_state.conversation = get_conversation_chain(vectorstore)
+        uploaded = st.file_uploader(
+            "📄 Upload documents (PDF, DOCX, or TXT)",
+            type=["pdf", "docx", "txt"],
+            accept_multiple_files=True,
+            key="uploader"
+        )
     
-                        st.success("Documents successfully processed!")
+        # Add only new files and limit to 3
+        if uploaded:
+            if len(uploaded) + len(st.session_state.uploaded_docs) > 3:
+                st.warning("You can only upload a total of 3 documents.")
+            else:
+                st.session_state.uploaded_docs.extend(uploaded)
     
-        except Exception as e:
-            st.error(f"An error occurred during upload: {str(e)}")
-
+        # Show uploaded documents
+        if st.session_state.uploaded_docs:
+            st.write("**Uploaded Documents:**")
+            for i, doc in enumerate(st.session_state.uploaded_docs):
+                st.write(f"{i+1}. {doc.name}")
+            if st.button("Clear Uploads"):
+                st.session_state.uploaded_docs = []
+    
+        # Process button
+        if st.session_state.uploaded_docs and st.button("Process"):
+            with st.spinner("Processing..."):
+                try:
+                    docs = st.session_state.uploaded_docs
+                    labeled_docs = get_labeled_documents_from_any(docs)
+                    st.session_state.labeled_docs = labeled_docs
+                    doc_summaries = summarize_documents(labeled_docs)
+                    st.session_state.doc_summaries = doc_summaries
+                    st.session_state.word_counts = count_words_in_documents(labeled_docs)
+    
+                    raw_text = get_document_text(docs)
+                    text_chunks = get_text_chunks(raw_text)
+                    vectorstore = get_vectorstore(text_chunks)
+                    st.session_state.conversation = get_conversation_chain(vectorstore)
+    
+                    st.success("Documents successfully processed!")
+                except Exception as e:
+                    st.error(f"An error occurred during processing: {str(e)}")
 
         st.subheader("Chat Options")
         save_chat_button = st.button("💾 Save Chat to PDF")
