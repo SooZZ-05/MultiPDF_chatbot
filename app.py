@@ -137,13 +137,33 @@ def auto_play_audio(text, lang="en", key="audio"):
     mp3_fp.seek(0)
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
-    audio_html = f"""
-    <audio id="{key}" controls style="width: 100%; max-width: 100%;">
-        <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-        Your browser does not support the audio element.
-    </audio>
+    html_code = f"""
+    <html>
+    <body>
+        <button id="btn_{key}" onclick="toggleAudio_{key}()">▶️</button>
+        <audio id="{key}" src="data:audio/mp3;base64,{audio_base64}"></audio>
+        <script>
+        var audio_{key} = document.getElementById("{key}");
+        var button_{key} = document.getElementById("btn_{key}");
+
+        function toggleAudio_{key}() {{
+            if (audio_{key}.paused) {{
+                audio_{key}.play();
+                button_{key}.innerHTML = "⏸️";
+            }} else {{
+                audio_{key}.pause();
+                button_{key}.innerHTML = "▶️";
+            }}
+        }}
+
+        audio_{key}.onended = function() {{
+            button_{key}.innerHTML = "▶️";
+        }};
+        </script>
+    </body>
+    </html>
     """
-    components.html(audio_html, height=60, scrolling=False)
+    components.html(html_code, height=70)
 
 def display_chat_history():
     chat_history_container = st.container()
