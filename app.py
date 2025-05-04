@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import os
 import numpy as np
 import base64
@@ -151,67 +150,6 @@ def auto_play_audio(text, lang="en"):
     """
     return audio_html
 
-def auto_toggle_audio(text, lang="en", index=0):
-    from gtts import gTTS
-    from io import BytesIO
-    import base64
-
-    tts = gTTS(text, lang=lang)
-    mp3_fp = BytesIO()
-    tts.write_to_fp(mp3_fp)
-    mp3_fp.seek(0)
-    audio_base64 = base64.b64encode(mp3_fp.read()).decode()
-
-    audio_html = f"""
-    <html>
-    <body>
-        <audio id="audio_{index}" style="display:none">
-            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-        </audio>
-        <button id="btn_{index}" onclick="toggleAudio_{index}()">🔊</button>
-
-        <script>
-            var currentAudio = null;
-            var currentButton = null;
-
-            function toggleAudio_{index}() {{
-                var audio = document.getElementById("audio_{index}");
-                var button = document.getElementById("btn_{index}");
-
-                if (currentAudio && currentAudio !== audio) {{
-                    currentAudio.pause();
-                    currentAudio.currentTime = 0;
-                    if (currentButton) {{
-                        currentButton.innerText = "🔊";
-                    }}
-                }}
-
-                if (audio.paused) {{
-                    audio.play();
-                    button.innerText = "❌";
-                    currentAudio = audio;
-                    currentButton = button;
-                }} else {{
-                    audio.pause();
-                    audio.currentTime = 0;
-                    button.innerText = "🔊";
-                    currentAudio = null;
-                    currentButton = null;
-                }}
-
-                audio.onended = function () {{
-                    button.innerText = "🔊";
-                    currentAudio = null;
-                    currentButton = null;
-                }};
-            }}
-        </script>
-    </body>
-    </html>
-    """
-    # Set a fixed height and width for the component
-    components.html(audio_html, height=80, width=100)
-
 def display_chat_history():
     chat_history_container = st.container()
     for i, message in enumerate(st.session_state.chat_history):
@@ -225,7 +163,7 @@ def display_chat_history():
                     if st.button("🔊", key=f"play_{i}"):
                         # audio_fp = text_to_speech_base64(message["content"])
                         # st.audio(audio_fp.read(), format="audio/mp3")
-                        audio_html = auto_toggle_audio(message["content"])
+                        audio_html = auto_play_audio(message["content"])
                         st.markdown(audio_html, unsafe_allow_html=True)
 
 def main():
