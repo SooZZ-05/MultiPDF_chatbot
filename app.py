@@ -144,8 +144,9 @@ def auto_play_audio(text, lang="en"):
     audio_base64 = base64.b64encode(mp3_fp.read()).decode()
 
     audio_html = f"""
-        <audio autoplay="true" style="display:none">
+        <audio controls style="width: 100%;">
             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+            Your browser does not support the audio element.
         </audio>
     """
     return audio_html
