@@ -205,7 +205,7 @@ def toggle_audio_player(text, key):
         }}
     }});
     </script>
-    
+    """
     
     return audio_html
 
