@@ -298,12 +298,14 @@ def main():
                 st.success("PDFs successfully processed!")
 
         st.subheader("Chat Options")
+
         save_option = st.radio(
             "Choose how to handle chat history:",
             ("🖨️ Print with Chat History (Browser Print)", "💾 Print Raw Text to PDF")
         )
-
+        
         save_chat_button = st.button("Proceed")
+        
         if save_chat_button and st.session_state.chat_history:
             if save_option == "💾 Print Raw Text to PDF":
                 chat_pdf = save_chat_to_pdf(st.session_state.chat_history)
@@ -316,19 +318,18 @@ def main():
                 st.success("Chat history saved as PDF!")
         
             elif save_option == "🖨️ Print with Chat History (Browser Print)":
-                # Trigger print from main window context using markdown
+                # Trigger print from main window context using markdown, only after button click
                 st.markdown(
                     """
                     <script>
-                        window.onload = function() {
+                        document.addEventListener('DOMContentLoaded', function() {
                             window.print();
-                        }
+                        });
                     </script>
                     """,
                     unsafe_allow_html=True
                 )
                 st.info("Browser print dialog opened. Use it to print or save as PDF.")
-
     # Disable user input until the PDFs are uploaded and processed
     if st.session_state.conversation:
         user_question = st.chat_input("💬 Ask a question about your documents:")
