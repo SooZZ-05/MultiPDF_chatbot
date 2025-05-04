@@ -188,8 +188,11 @@ def display_chat_history():
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])
                 with col2:
-                    audio_html = generate_audio_html(message["content"], i)
-                    st.markdown(audio_html, unsafe_allow_html=True)
+                    tts = gTTS(message["content"])
+                    mp3_fp = BytesIO()
+                    tts.write_to_fp(mp3_fp)
+                    mp3_fp.seek(0)
+                    st.audio(mp3_fp, format="audio/mp3")
         
         st.markdown(get_audio_control_script(), unsafe_allow_html=True)
 
