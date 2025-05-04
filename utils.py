@@ -132,35 +132,33 @@ def extract_table(text):
     text = re.sub(r'[^\x00-\x7F]+', '', text)
     lines = text.splitlines()
 
-    # Filter and clean lines
-    filtered_lines = []
+    # Keep only rows that are pipe-separated and not separator lines
+    table_lines = []
     for line in lines:
         line = line.strip()
-        if not line or re.match(r'^\s*\|?\s*-+\s*\|?\s*$', line):  # skip separators
+        if not line:
+            continue
+        if re.match(r'^\s*\|?\s*-+\s*\|?', line):  # Skip lines of dashes
             continue
         if '|' in line:
-            filtered_lines.append(line.strip('|'))
+            table_lines.append(line.strip('|'))
 
-    # Split into rows
+    # Now split each line into cells
     table_data = []
-    for line in filtered_lines:
+    for line in table_lines:
         cells = [cell.strip() for cell in line.split('|')]
         table_data.append(cells)
 
-    # Normalize all rows to the length of the header
+    # If empty, return
     if not table_data:
         return []
 
+    # Remove rows with fewer columns than the header
     header_len = len(table_data[0])
-    normalized_data = []
-    for row in table_data:
-        if len(row) == header_len:
-            normalized_data.append(row)
-        elif len(row) < header_len:
-            # Pad short rows with empty strings
-            normalized_data.append(row + [''] * (header_len - len(row)))
+    cleaned_data = [row for row in table_data if len(row) == header_len]
 
-    return normalized_data
+    return cleaned_data
+
 
 def draw_table(pdf, table_data, col_width=63, line_height=8):
     # Draw header row with bold font
