@@ -13,6 +13,7 @@ from langchain_community.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from utils import handle_greeting, handle_farewell, summarize_documents, is_summary_question, extract_target_doc_label, get_labeled_documents, is_wordcount_question, count_words_in_documents, save_chat_to_pdf
+from audio_utils import toggle_audio_player
 
 # Set API Key from Streamlit Secrets
 def set_openai_api_key():
@@ -168,9 +169,9 @@ def display_chat_history():
                     # if st.button("🔊", key=f"play_{i}"):
                     #     audio_html = auto_play_audio(message["content"])
                     #     st.markdown(audio_html, unsafe_allow_html=True)
-                    if st.button("🔊", key=f"play_{i}"):
-                        audio_fp = text_to_speech_base64(message["content"])
-                        st.audio(audio_fp.read(), format="audio/mp3")
+                    button_html = f'<button id="btn_{i}">🔊</button>'
+                    audio_html = toggle_audio_player(message["content"], key=i)
+                    st.markdown(button_html + audio_html, unsafe_allow_html=True)
 
 def main():
     set_openai_api_key()
