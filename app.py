@@ -203,8 +203,10 @@ def main():
     
         for i, doc in enumerate(st.session_state['uploaded_docs']):
             st.write(f"Document {i+1}: {doc.name}")
-            if st.button(f"Remove {doc.name}", key=f"remove_{i}"):
-                st.session_state['uploaded_docs'].pop(i)
+    
+        if st.session_state['uploaded_docs']:
+            if st.button("Remove All Documents"):
+                st.session_state['uploaded_docs'] = []
                 # Force a rerun to update the file uploader's disabled state
                 st.rerun()
     
